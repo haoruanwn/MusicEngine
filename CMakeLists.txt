@@ -9,7 +9,9 @@ find_package(TagLib REQUIRED)
 
 add_executable(${PROJECT_NAME} main.cpp
         lib/SongParser.cpp
-        lib/SongParser.h)
+        lib/SongParser.h
+        lib/SongManager.cpp
+        lib/SongManager.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         lib
