@@ -6,10 +6,8 @@
 
 void printSongInfo(const Song& song);
 
-
-
 int main() {
-    const std::filesystem::path music_file {"./music_test"};
+    const std::filesystem::path music_file {"/home/hao/Projects/music_system/music_test/原色.m4a"};
 
     if (!std::filesystem::exists(music_file)) {
         std::cerr << "错误: 文件不存在!" << std::endl;
@@ -20,9 +18,12 @@ int main() {
     if (auto song_opt = SongParser::createSongFromFile(music_file))
     {
         std::cout << "成功读取歌曲信息" << std::endl;
-
+        printSongInfo(*song_opt);
     }
-
+    else
+    {
+        std::cout << "读取歌曲信息失败" << std::endl;
+    }
 
     return 0;
 }

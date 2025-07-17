@@ -3,6 +3,8 @@ project(music_system)
 
 set(CMAKE_CXX_STANDARD 20)
 
+
+find_package(ZLIB REQUIRED)
 find_package(TagLib REQUIRED)
 
 add_executable(${PROJECT_NAME} main.cpp
@@ -14,5 +16,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    TagLib::Tag
+        stdc++fs
+        TagLib::TagLib
 )

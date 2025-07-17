@@ -1,3 +1,0 @@
-[submodule "lib/thirdparty/taglib"]
-	path = lib/thirdparty/taglib
-	url = https://github.com/taglib/taglib.git
