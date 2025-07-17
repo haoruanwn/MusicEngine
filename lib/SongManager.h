@@ -2,22 +2,21 @@
 
 #pragma once
 
-#include "song.h"
-#include <vector>
-#include <string>
-#include <filesystem>
-#include <mutex>
-#include <future>
-#include <functional>
 #include <atomic> // 新增：用于线程安全的布尔标志
+#include <filesystem>
+#include <functional>
+#include <future>
+#include <mutex>
+#include <string>
+#include <vector>
+#include "song.h"
 
-class SongManager
-{
+class SongManager {
 public:
-    static SongManager& getInstance();
+    static SongManager &getInstance();
 
-    SongManager(const SongManager&) = delete;
-    SongManager& operator=(const SongManager&) = delete;
+    SongManager(const SongManager &) = delete;
+    SongManager &operator=(const SongManager &) = delete;
 
     /**
      * @brief 异步扫描音乐目录.
@@ -27,8 +26,8 @@ public:
      * @return 如果成功启动扫描则返回true, 否则返回false.
      */
     // 修正1：函数签名与cpp文件匹配，使用 const& 提高效率
-    bool startScan(const std::filesystem::path& directoryPath,
-                   const std::function<void(size_t)>& onScanFinished = nullptr);
+    bool startScan(const std::filesystem::path &directoryPath,
+                   const std::function<void(size_t)> &onScanFinished = nullptr);
 
     /**
      * @brief 检查当前是否正在扫描.
@@ -37,7 +36,12 @@ public:
     bool isScanning() const;
 
     std::vector<Song> getAllSongs() const;
-    std::vector<Song> searchSongs(const std::string& query) const;
+    std::vector<Song> searchSongs(const std::string &query) const;
+
+    // 用以获取目前扫描到的歌曲名
+    std::vector<std::string> getSongNames() const;
+
+    void setDirectoryPath(const std::filesystem::path &directoryPath);
 
 private:
     SongManager(); // 构造函数移至cpp文件以配合原子变量初始化
@@ -49,4 +53,6 @@ private:
     std::future<void> m_scanFuture;
     // 新增2：一个线程安全的标志，用于快速判断扫描状态
     std::atomic<bool> m_isScanning;
+
+    std::filesystem::path m_directoryPath;
 };

@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "song.h" // 依赖 Song 结构体定义
-#include <optional>
 #include <filesystem>
+#include <optional>
+#include "song.h" // 依赖 Song 结构体定义
 
 // 我们将所有解析相关的函数都放在 SongParser 命名空间下
 // 这是一个好习惯，可以避免函数名与项目的其他部分冲突
@@ -19,6 +19,6 @@ namespace SongParser {
      * @return 如果解析成功, 返回一个包含 Song 数据的 std::optional;
      * 如果文件无效或无法读取标签, 则返回 std::nullopt.
      */
-    std::optional<Song> createSongFromFile(const std::filesystem::path& filePath);
+    std::optional<Song> createSongFromFile(const std::filesystem::path &filePath);
 
 } // namespace SongParser
