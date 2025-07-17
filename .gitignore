@@ -1,0 +1,7 @@
+build/
+.idea/
+cmake-build-debug/
+cmake-build-debug-*/
+
+# 用于测试音乐的存储目录
+music_test/
