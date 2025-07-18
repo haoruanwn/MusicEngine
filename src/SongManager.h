@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include <atomic> // 新增：用于线程安全的布尔标志
+#include <atomic>
 #include <filesystem>
 #include <functional>
 #include <future>
 #include <mutex>
 #include <string>
 #include <vector>
-#include "song.h"
+#include "Song.h"
 
 class SongManager {
 public:
@@ -25,7 +25,6 @@ public:
      * @param onScanFinished (可选) 扫描完成时要调用的回调函数.
      * @return 如果成功启动扫描则返回true, 否则返回false.
      */
-    // 修正1：函数签名与cpp文件匹配，使用 const& 提高效率
     bool startScan(const std::function<void(size_t)> &onScanFinished = nullptr);
 
     /**
@@ -43,14 +42,14 @@ public:
     void setDirectoryPath(const std::filesystem::path &directoryPath);
 
 private:
-    SongManager(); // 构造函数移至cpp文件以配合原子变量初始化
-    ~SongManager(); // 明确声明析构函数，以确保后台任务能被正确处理
+    SongManager();
+    ~SongManager();
 
     std::vector<Song> m_songDatabase;
     mutable std::mutex m_dbMutex;
 
     std::future<void> m_scanFuture;
-    // 新增2：一个线程安全的标志，用于快速判断扫描状态
+
     std::atomic<bool> m_isScanning;
 
     std::filesystem::path m_directoryPath;

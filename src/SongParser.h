@@ -10,28 +10,23 @@
 #include <string>
 #include <vector>
 
-// 我们的 Song 数据结构
-#include "song.h"
 
-// --- TagLib 核心和各格式的头文件 ---
-#include <taglib/audioproperties.h>
-#include <taglib/fileref.h>
-#include <taglib/tag.h>
+#include "Song.h"
 
-// MP3 支持
-#include <taglib/attachedpictureframe.h>
-#include <taglib/id3v2tag.h>
-#include <taglib/mpegfile.h>
-
-// M4A (MP4) 支持
-#include <taglib/mp4coverart.h>
-#include <taglib/mp4file.h>
-#include <taglib/mp4item.h>
-#include <taglib/mp4tag.h>
-
-// FLAC 支持 (新增)
-#include <taglib/flacfile.h>
-#include <taglib/flacpicture.h>
+// 包含所有实现所需的 TagLib 内部头文件
+#include <iostream>
+#include "tag.h"
+#include "fileref.h"
+#include "audioproperties.h"
+#include "mpeg/mpegfile.h"
+#include "mpeg/id3v2/id3v2tag.h"
+#include "mpeg/id3v2/frames/attachedpictureframe.h"
+#include "mp4/mp4file.h"
+#include "mp4/mp4tag.h"
+#include "mp4/mp4item.h"
+#include "mp4/mp4coverart.h"
+#include "flac/flacfile.h"
+#include "flac/flacfile.h"
 
 
 namespace SongParser {
