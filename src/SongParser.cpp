@@ -16,6 +16,8 @@
 #include <taglib/mp4tag.h>
 #include <taglib/mpegfile.h>
 
+// 这个文件未来会被删除
+
 namespace SongParser {
 
     std::optional<Song> createSongFromFile(const std::filesystem::path &filePath) {

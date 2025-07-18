@@ -21,8 +21,7 @@ SongManager &SongManager::getInstance() {
     return instance;
 }
 
-bool SongManager::startScan(const std::filesystem::path &directoryPath,
-                            const std::function<void(size_t)> &onScanFinished) {
+bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
     // 改进1：检查是否已有扫描任务正在进行
     if (m_isScanning) {
         std::cout << "[SongManager] 错误: 上一个扫描任务仍在进行中。" << std::endl;
@@ -31,15 +30,15 @@ bool SongManager::startScan(const std::filesystem::path &directoryPath,
 
     m_isScanning = true; // 设置扫描标志
 
-    m_scanFuture = std::async(std::launch::async, [this, directoryPath, onScanFinished]() {
-        std::cout << "[SongManager] 后台扫描开始于目录: " << directoryPath << std::endl;
+    m_scanFuture = std::async(std::launch::async, [this, onScanFinished]() {
+        std::cout << "[SongManager] 后台扫描开始于目录: " << m_directoryPath << std::endl;
 
         std::vector<Song> newDatabase;
         const std::vector<std::string> supportedExtensions = {".mp3", ".m4a", ".flac"};
 
         // 使用 try-catch 块来处理文件系统可能抛出的异常 (如权限问题)
         try {
-            for (const auto &entry: std::filesystem::recursive_directory_iterator(directoryPath)) {
+            for (const auto &entry: std::filesystem::recursive_directory_iterator(m_directoryPath)) {
                 if (entry.is_regular_file()) {
                     std::string extension = entry.path().extension().string();
                     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);

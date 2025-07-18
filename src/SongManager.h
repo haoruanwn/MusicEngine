@@ -26,8 +26,7 @@ public:
      * @return 如果成功启动扫描则返回true, 否则返回false.
      */
     // 修正1：函数签名与cpp文件匹配，使用 const& 提高效率
-    bool startScan(const std::filesystem::path &directoryPath,
-                   const std::function<void(size_t)> &onScanFinished = nullptr);
+    bool startScan(const std::function<void(size_t)> &onScanFinished = nullptr);
 
     /**
      * @brief 检查当前是否正在扫描.

@@ -9,16 +9,13 @@ void printSongInfo(const Song &song);
 
 int main() {
 
-    const std::filesystem::path musicDirectory = "/home/hao/Projects/music_system/music_test";
-    // ================================================================
-
     std::cout << "--- 音乐播放器系统启动 ---" << std::endl;
-    std::cout << "将要扫描的目标目录: \"" << musicDirectory << "\"" << std::endl;
+    std::cout << "将要扫描的目标目录: \"" << "/home/hao/Projects/music_system/music_test" << "\"" << std::endl;
 
 
     auto &manager = SongManager::getInstance();
 
-    manager.setDirectoryPath(musicDirectory);
+    manager.setDirectoryPath("/home/hao/Projects/music_system/music_test");
 
     auto scanCallback = [](size_t count) {
         std::cout << "\n[主线程回调] 扫描完成！共发现 " << count << " 首歌曲。" << std::endl;
@@ -26,13 +23,13 @@ int main() {
 
     // 3. 首次尝试启动扫描
     std::cout << "\n[主线程] 第一次请求 SongManager 开始扫描..." << std::endl;
-    if (manager.startScan(musicDirectory, scanCallback)) {
+    if (manager.startScan(scanCallback)) {
         std::cout << "[主线程] 扫描任务已成功启动。" << std::endl;
     }
 
     // 4. 在扫描进行中，立即尝试再次启动扫描
     std::cout << "\n[主线程] 在扫描期间，立即再次请求扫描..." << std::endl;
-    if (!manager.startScan(musicDirectory, scanCallback)) {
+    if (!manager.startScan(scanCallback)) {
         std::cout << "[主线程] 请求被拒绝，正如预期。因为已有任务在进行中。" << std::endl;
     }
 
