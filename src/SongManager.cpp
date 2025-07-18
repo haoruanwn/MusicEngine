@@ -1,9 +1,9 @@
 // SongManager.cpp
 
-#include "SongManager.h"
+#include "../include/SongManager.h"
 #include <algorithm>
 #include <iostream>
-#include "SongParser.h"
+#include "internal/SongParser.h"
 
 // 将构造函数实现移到cpp文件
 SongManager::SongManager() : m_isScanning(false) {}
