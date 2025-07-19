@@ -21,7 +21,6 @@ public:
     /**
      * @brief 异步扫描音乐目录.
      * 如果当前已有扫描任务正在进行，则此函数会立即返回false.
-     * @param directoryPath 要扫描的目录路径.
      * @param onScanFinished (可选) 扫描完成时要调用的回调函数.
      * @return 如果成功启动扫描则返回true, 否则返回false.
      */

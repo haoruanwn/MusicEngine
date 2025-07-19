@@ -11,7 +11,7 @@
 #include <vector>
 
 
-#include "../../include/Song.h"
+#include "../include/Song.h"
 
 // 包含所有实现所需的 TagLib 内部头文件
 #include <iostream>

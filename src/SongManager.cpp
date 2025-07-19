@@ -3,7 +3,7 @@
 #include "../include/SongManager.h"
 #include <algorithm>
 #include <iostream>
-#include "internal/SongParser.h"
+#include "SongParser.h"
 
 // 将构造函数实现移到cpp文件
 SongManager::SongManager() : m_isScanning(false) {}
@@ -22,7 +22,11 @@ SongManager &SongManager::getInstance() {
 }
 
 bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
-    // 改进1：检查是否已有扫描任务正在进行
+    // 检查目录路径是否已设置
+    if (m_directoryPath.empty())
+        std::cerr << "[SongManager] 错误: 目录路径未设置。" << std::endl;
+    
+    // 检查是否已有扫描任务正在进行
     if (m_isScanning) {
         std::cout << "[SongManager] 错误: 上一个扫描任务仍在进行中。" << std::endl;
         return false;
@@ -83,6 +87,10 @@ std::vector<Song> SongManager::getAllSongs() const {
 }
 
 std::vector<Song> SongManager::searchSongs(const std::string &query) const {
+    // 检查目录路径是否已设置
+    if (m_directoryPath.empty())
+        std::cerr << "[SongManager] 错误: 目录路径未设置。" << std::endl;
+
     std::vector<Song> results;
     std::string lowerQuery = query;
     std::transform(lowerQuery.begin(), lowerQuery.end(), lowerQuery.begin(), ::tolower);

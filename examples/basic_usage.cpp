@@ -14,7 +14,8 @@ int main() {
 
     auto &manager = SongManager::getInstance();
 
-    manager.setDirectoryPath("/home/hao/Projects/music_system/music_test");
+    // manager.setDirectoryPath("/home/hao/Projects/music_system/music_test");
+    manager.setDirectoryPath("/root/music_test");
 
     auto scanCallback = [](size_t count) {
         std::cout << "\n[主线程回调] 扫描完成！共发现 " << count << " 首歌曲。" << std::endl;

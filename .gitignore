@@ -1,6 +1,8 @@
 build/
 .idea/
 cmake-build-*/
+.cache/
+.vscode/
 
 # 用于测试音乐的存储目录
 music_test/
