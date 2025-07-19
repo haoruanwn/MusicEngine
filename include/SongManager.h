@@ -39,6 +39,7 @@ public:
     std::vector<std::string> getSongNames() const;
 
     void setDirectoryPath(const std::filesystem::path &directoryPath);
+    void setDirectoryPath(const std::vector<std::filesystem::path> &directoryPaths);
 
 private:
     SongManager();
@@ -51,5 +52,6 @@ private:
 
     std::atomic<bool> m_isScanning;
 
-    std::filesystem::path m_directoryPath;
+    // std::filesystem::path m_directoryPath;
+    std::vector<std::filesystem::path> m_directoryPaths;
 };

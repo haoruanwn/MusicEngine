@@ -5,7 +5,6 @@
 #include <iostream>
 #include "SongParser.h"
 
-// 将构造函数实现移到cpp文件
 SongManager::SongManager() : m_isScanning(false) {}
 
 // 实现析构函数
@@ -23,9 +22,11 @@ SongManager &SongManager::getInstance() {
 
 bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
     // 检查目录路径是否已设置
-    if (m_directoryPath.empty())
+    if (m_directoryPaths.empty()) {
         std::cerr << "[SongManager] 错误: 目录路径未设置。" << std::endl;
-    
+        return false;
+    }
+
     // 检查是否已有扫描任务正在进行
     if (m_isScanning) {
         std::cout << "[SongManager] 错误: 上一个扫描任务仍在进行中。" << std::endl;
@@ -34,31 +35,38 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
 
     m_isScanning = true; // 设置扫描标志
 
-    m_scanFuture = std::async(std::launch::async, [this, onScanFinished]() {
-        std::cout << "[SongManager] 后台扫描开始于目录: " << m_directoryPath << std::endl;
+    // 复制一份路径，确保在异步任务中使用的路径不会被修改
+    auto pathsToScan = m_directoryPaths;
+
+    // 调用std::async启用一个异步任务（传入一个lambda表达式）
+    m_scanFuture = std::async(std::launch::async, [this, pathsToScan, onScanFinished]() {
+        std::cout << "[SongManager] 后台扫描开始..." << std::endl;
 
         std::vector<Song> newDatabase;
         const std::vector<std::string> supportedExtensions = {".mp3", ".m4a", ".flac"};
 
-        // 使用 try-catch 块来处理文件系统可能抛出的异常 (如权限问题)
-        try {
-            for (const auto &entry: std::filesystem::recursive_directory_iterator(m_directoryPath)) {
-                if (entry.is_regular_file()) {
-                    std::string extension = entry.path().extension().string();
-                    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+        for (const auto &dirPath: pathsToScan) {
+            std::cout << "[SongManager] ==> 正在扫描: " << dirPath << std::endl;
+            try {
+                // recursive_directory_iterator 必须在循环内部对单个路径使用
+                for (const auto &entry: std::filesystem::recursive_directory_iterator(dirPath)) {
+                    if (entry.is_regular_file()) {
+                        std::string extension = entry.path().extension().string();
+                        std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
-                    for (const auto &supExt: supportedExtensions) {
-                        if (extension == supExt) {
-                            if (auto songOpt = SongParser::createSongFromFile(entry.path())) {
-                                newDatabase.push_back(*songOpt);
+                        for (const auto &supExt: supportedExtensions) {
+                            if (extension == supExt) {
+                                if (auto songOpt = SongParser::createSongFromFile(entry.path())) {
+                                    newDatabase.push_back(*songOpt);
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
+            } catch (const std::filesystem::filesystem_error &e) {
+                std::cerr << "[SongManager] 文件系统错误: " << e.what() << std::endl;
             }
-        } catch (const std::filesystem::filesystem_error &e) {
-            std::cerr << "[SongManager] 文件系统错误: " << e.what() << std::endl;
         }
 
         size_t count = newDatabase.size();
@@ -73,7 +81,7 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
             onScanFinished(count);
         }
 
-        m_isScanning = false; // 扫描结束，重置标志
+        m_isScanning = false;
     });
 
     return true;
@@ -88,7 +96,7 @@ std::vector<Song> SongManager::getAllSongs() const {
 
 std::vector<Song> SongManager::searchSongs(const std::string &query) const {
     // 检查目录路径是否已设置
-    if (m_directoryPath.empty())
+    if (m_directoryPaths.empty())
         std::cerr << "[SongManager] 错误: 目录路径未设置。" << std::endl;
 
     std::vector<Song> results;
@@ -110,17 +118,24 @@ std::vector<Song> SongManager::searchSongs(const std::string &query) const {
 std::vector<std::string> SongManager::getSongNames() const {
     std::vector<std::string> results;
 
-    if (m_directoryPath.empty())
+    if (m_directoryPaths.empty())
         std::cerr << "[SongManager] 错误: 目录路径未设置。" << std::endl;
 
     for (const auto &song: m_songDatabase) {
-        std::filesystem::path relativePath = std::filesystem::relative(song.filePath, m_directoryPath);
-        results.push_back(relativePath.string());
+        results.push_back(song.filePath.filename().string());
     }
     return results;
 }
 
-void SongManager::setDirectoryPath(const std::filesystem::path &directoryPath) {
-    m_directoryPath = directoryPath;
+// setDirectoryPath 方法设定中只能执行一次，所以每次执行的时候清理之前的
+void SongManager::setDirectoryPath(const std::vector<std::filesystem::path> &directoryPaths) {
+    // 清空容器
+    m_directoryPaths.clear();
+    m_directoryPaths = directoryPaths;
 }
 
+void SongManager::setDirectoryPath(const std::filesystem::path &directoryPath) {
+    // 清空容器
+    m_directoryPaths.clear();
+    m_directoryPaths.push_back(directoryPath);
+}

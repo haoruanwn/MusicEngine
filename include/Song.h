@@ -7,7 +7,6 @@
 #include <vector>
 
 // 歌曲信息结构体
-// 使用 struct 表明它主要是一个数据容器
 struct Song {
     // 基本信息
     std::string title; // 曲名
@@ -17,8 +16,6 @@ struct Song {
     int32_t year = 0; // 年份
     int32_t duration = 0; // 时长 (秒)
 
-    // 文件路径信息
-    // 使用 std::filesystem::path 使路径操作更安全、更强大
     std::filesystem::path filePath;
 
     // 专辑封面 (二进制数据)

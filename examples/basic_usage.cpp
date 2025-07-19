@@ -6,16 +6,19 @@
 
 void printSongInfo(const Song &song);
 
+std::vector<std::filesystem::path> music_dirs = {
+    "/home/hao/Projects/music_system/music_test",
+    "/home/hao/Projects/music_system/music_test2"
+};
+
 int main() {
 
     std::cout << "--- 音乐播放器系统启动 ---" << std::endl;
-    std::cout << "将要扫描的目标目录: \"" << "/home/hao/Projects/music_system/music_test" << "\"" << std::endl;
-
 
     auto &manager = SongManager::getInstance();
 
     // manager.setDirectoryPath("/home/hao/Projects/music_system/music_test");
-    manager.setDirectoryPath("/root/music_test");
+    manager.setDirectoryPath(music_dirs);
 
     auto scanCallback = [](size_t count) {
         std::cout << "\n[主线程回调] 扫描完成！共发现 " << count << " 首歌曲。" << std::endl;
@@ -72,7 +75,7 @@ int main() {
     return 0;
 }
 
-// 一个简单的函数，用来打印歌曲信息
+// 用来打印歌曲信息
 void printSongInfo(const Song &song) {
     std::cout << "===== 歌曲信息 =====" << std::endl;
     std::cout << "标题: " << (song.title.empty() ? "未知" : song.title) << std::endl;
