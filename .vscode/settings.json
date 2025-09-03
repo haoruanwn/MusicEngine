@@ -1,7 +1,7 @@
 {
     // --- Clangd 智能提示配置 ---
     "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/build/linux-debug/",
+        "--compile-commands-dir=${workspaceFolder}/build/Debug/",
         "--all-scopes-completion",
         "--completion-style=detailed",
         "--header-insertion=never"
@@ -14,23 +14,28 @@
     // --- 任务按钮插件配置 ---
     "VsCodeTaskButtons.tasks": [
         {
+            "label": "$(gear) Configure Debug",
+            "task": "cmake: configure (Debug)", // <-- 指向配置任务
+            "tooltip": "安装依赖并生成 Debug 构建系统"
+        },
+        {
             "label": "$(tools) Build Debug",
-            "task": "Build (Debug)",
-            "tooltip": "安装依赖并构建 Debug 版本"
+            "task": "build: debug", // <-- 指向构建任务
+            "tooltip": "编译 Debug 版本"
+        },
+        {
+            "label": "$(gear) Configure Release",
+            "task": "cmake: configure (Release)", // <-- 指向配置任务
+            "tooltip": "安装依赖并生成 Release 构建系统"
         },
         {
             "label": "$(package) Build Release",
-            "task": "Build (Release)",
-            "tooltip": "安装依赖并构建 Release 版本"
-        },
-        {
-            "label": "$(chip) Build AArch64",
-            "task": "Build (AArch64 Debug)",
-            "tooltip": "交叉编译 AArch64 Debug 版本"
+            "task": "build: release", // <-- 指向构建任务
+            "tooltip": "编译 Release 版本"
         },
         {
             "label": "$(trash) Clean",
-            "task": "Clean",
+            "task": "Clean: All",
             "tooltip": "清理所有构建产物"
         }
     ]

@@ -10,3 +10,6 @@ music_test/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+
+# conan生成的配置文件
+CMakeUserPresets.json

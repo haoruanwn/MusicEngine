@@ -1,115 +1,66 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        // =========== Conan 依赖安装任务 ===========
-        {
-            "label": "Conan Install (Linux Debug)",
-            "type": "shell",
-            "command": "conan",
-            "args": [
-                "install",
-                ".",
-                "--output-folder=build/linux-debug",
-                "--build=missing",
-                "-s", "build_type=Debug"
-            ],
-            "problemMatcher": [],
-            "detail": "为 Linux Debug 配置安装 Conan 依赖"
-        },
-        {
-            "label": "Conan Install (Linux Release)",
-            "type": "shell",
-            "command": "conan",
-            "args": [
-                "install",
-                ".",
-                "--output-folder=build/linux-release",
-                "--build=missing",
-                "-s", "build_type=Release"
-            ],
-            "problemMatcher": [],
-            "detail": "为 Linux Release 配置安装 Conan 依赖"
-        },
-        {
-            "label": "Conan Install (AArch64 Debug)",
-            "type": "shell",
-            "command": "conan",
-            "args": [
-                "install",
-                ".",
-                "--output-folder=build/aarch64-linux-gnu-debug",
-                "--build=missing",
-                "--profile:host=./aarch64-linux-gnu", // 确保 aarch64-linux-gnu 文件在根目录
-                "--profile:build=default",
-                "-s", "build_type=Debug"
-            ],
-            "problemMatcher": [],
-            "detail": "为 AArch64 Debug 交叉编译安装 Conan 依赖"
-        },
-        // =========== 构建任务 ===========
-        {
-            "label": "Build (Debug)",
-            "type": "shell",
-            "command": "cmake",
-            "args": [
-                "--build",
-                "--preset",
-                "linux-debug"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": ["$gcc"],
-            "detail": "构建 Debug 版本",
-            "dependsOn": [
-                "Conan Install (Linux Debug)"
-            ]
-        },
-        {
-            "label": "Build (Release)",
-            "type": "shell",
-            "command": "cmake",
-            "args": [
-                "--build",
-                "--preset",
-                "linux-release"
-            ],
-            "group": "build",
-            "problemMatcher": ["$gcc"],
-            "detail": "构建 Release 版本",
-            "dependsOn": [
-                "Conan Install (Linux Release)"
-            ]
-        },
-        {
-            "label": "Build (AArch64 Debug)",
-            "type": "shell",
-            "command": "cmake",
-            "args": [
-                "--build",
-                "--preset",
-                "aarch64-linux-gnu-debug"
-            ],
-            "group": "build",
-            "problemMatcher": ["$gcc"],
-            "detail": "交叉编译构建 AArch64 Debug 版本",
-            "dependsOn": [
-                "Conan Install (AArch64 Debug)"
-            ]
-        },
-        // =========== 清理任务 ===========
-        {
-            "label": "Clean",
-            "type": "shell",
-            "command": "rm",
-            "args": [
-                "-rf",
-                "build"
-            ],
-            "group": "build",
-            "problemMatcher": [],
-            "detail": "清理构建目录"
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    // --- 原子任务：安装依赖 ---
+    {
+      "label": "conan: install (Debug)",
+      "type": "shell",
+      "command": "conan install . --build=missing -s build_type=Debug",
+      "detail": "使用 Conan 安装 Debug 模式的依赖包"
+    },
+    {
+      "label": "conan: install (Release)",
+      "type": "shell",
+      "command": "conan install . --build=missing -s build_type=Release",
+      "detail": "使用 Conan 安装 Release 模式的依赖包"
+    },
+
+    // --- 配置任务 (带依赖安装) ---
+    {
+      "label": "cmake: configure (Debug)",
+      "type": "shell",
+      "command": "cmake --preset conan-debug",
+      "dependsOn": [ // <-- 关键：配置前先确保依赖已安装
+        "conan: install (Debug)"
+      ],
+      "group": "build",
+      "detail": "执行 Conan install 并进行 CMake 配置 (Debug)"
+    },
+    {
+      "label": "cmake: configure (Release)",
+      "type": "shell",
+      "command": "cmake --preset conan-release",
+      "dependsOn": [ // <-- 关键：配置前先确保依赖已安装
+        "conan: install (Release)"
+      ],
+      "group": "build",
+      "detail": "执行 Conan install 并进行 CMake 配置 (Release)"
+    },
+
+    // --- 构建任务 ---
+    {
+      "label": "build: debug",
+      "type": "shell",
+      "command": "cmake --build --preset conan-debug",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"],
+      "detail": "编译 Debug 版本"
+    },
+    {
+      "label": "build: release",
+      "type": "shell",
+      "command": "cmake --build --preset conan-release",
+      "group": "build",
+      "problemMatcher": ["$gcc"],
+      "detail": "编译 Release 版本"
+    },
+
+    // --- 清理任务 ---
+    {
+      "label": "Clean: All",
+      "type": "shell",
+      "command": "rm -rf build",
+      "detail": "清理所有构建产物 (删除 build 文件夹)"
+    }
+  ]
 }

@@ -8,6 +8,7 @@ option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 find_package(taglib REQUIRED)
+find_package(spdlog REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -25,6 +26,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE
     PUBLIC
         taglib::taglib
+        spdlog::spdlog
     PRIVATE
         
 )

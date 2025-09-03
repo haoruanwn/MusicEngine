@@ -1,5 +1,6 @@
 [requires]
 taglib/2.0
+spdlog/1.15.3
 
 [generators]
 CMakeDeps 
