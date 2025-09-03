@@ -1,31 +1,37 @@
 {
-    "makefile.extensionOutputFolder": "./.vscode",
+    // --- Clangd 智能提示配置 ---
     "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/build/",
+        "--compile-commands-dir=${workspaceFolder}/build/linux-debug/",
         "--all-scopes-completion",
         "--completion-style=detailed",
         "--header-insertion=never"
     ],
+    // --- CMake Tools 插件配置 (推荐) ---
+    "cmake.configureOnOpen": false, // 建议关闭，我们手动控制
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.options.statusBarVisibility": "visible",
+
+    // --- 任务按钮插件配置 ---
     "VsCodeTaskButtons.tasks": [
         {
-            "label": "$(wrench) Configure",
-            "task": "CMake configure",
-            "tooltip": "Configure the project with CMake"
+            "label": "$(tools) Build Debug",
+            "task": "Build (Debug)",
+            "tooltip": "安装依赖并构建 Debug 版本"
         },
         {
-            "label": "$(tools) Build",
-            "task": "Build",
-            "tooltip": "Build the project"
+            "label": "$(package) Build Release",
+            "task": "Build (Release)",
+            "tooltip": "安装依赖并构建 Release 版本"
         },
         {
-            "label": "$(rocket) Flash",
-            "task": "Flash",
-            "tooltip": "Build and Flash the project to the target device"
+            "label": "$(chip) Build AArch64",
+            "task": "Build (AArch64 Debug)",
+            "tooltip": "交叉编译 AArch64 Debug 版本"
         },
         {
             "label": "$(trash) Clean",
             "task": "Clean",
-            "tooltip": "Clean the build directory"
+            "tooltip": "清理所有构建产物"
         }
     ]
 }

@@ -2,37 +2,52 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "default",
+            "name": "base",
             "hidden": true,
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/${presetName}",
-		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
-            "cacheVariables": {
-            }
+            "binaryDir": "${sourceDir}/build/${presetName}"
         },
         {
-            "name": "Debug",
-            "inherits": "default",
+            "name": "linux-debug",
+            "inherits": "base",
+            "displayName": "Linux Debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
-            }
+            },
+            "toolchainFile": "${sourceDir}/build/linux-debug/build/Debug/generators/conan_toolchain.cmake"
         },
         {
-            "name": "Release",
-            "inherits": "default",
+            "name": "linux-release",
+            "inherits": "base",
+            "displayName": "Linux Release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
-            }
+            },
+            "toolchainFile": "${sourceDir}/build/linux-release/build/Release/generators/conan_toolchain.cmake"
+        },
+        {
+            "name": "aarch64-linux-gnu-debug",
+            "inherits": "base",
+            "displayName": "AArch64 Linux Debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "toolchainFile": "${sourceDir}/build/aarch64-linux-gnu-debug/build/Debug/generators/conan_toolchain.cmake"
+        },
+        {
+            "name": "aarch64-linux-gnu-release",
+            "inherits": "base",
+            "displayName": "AArch64 Linux Release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "toolchainFile": "${sourceDir}/build/aarch64-linux-gnu-release/build/Release/generators/conan_toolchain.cmake"
         }
     ],
     "buildPresets": [
-        {
-            "name": "Debug",
-            "configurePreset": "Debug"
-        },
-        {
-            "name": "Release",
-            "configurePreset": "Release"
-        }
+        { "name": "linux-debug", "configurePreset": "linux-debug" },
+        { "name": "linux-release", "configurePreset": "linux-release" },
+        { "name": "aarch64-linux-gnu-debug", "configurePreset": "aarch64-linux-gnu-debug" },
+        { "name": "aarch64-linux-gnu-release", "configurePreset": "aarch64-linux-gnu-release" }
     ]
 }

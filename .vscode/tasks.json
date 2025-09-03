@@ -1,65 +1,115 @@
 {
     "version": "2.0.0",
     "tasks": [
+        // =========== Conan 依赖安装任务 ===========
         {
-            "label": "CMake configure",
+            "label": "Conan Install (Linux Debug)",
             "type": "shell",
-            "command": "cmake",
+            "command": "conan",
             "args": [
-                "--preset",
-                "Debug"
+                "install",
+                ".",
+                "--output-folder=build/linux-debug",
+                "--build=missing",
+                "-s", "build_type=Debug"
             ],
-            "group": "build",
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "detail": "Generated task for CMake configure"
+            "problemMatcher": [],
+            "detail": "为 Linux Debug 配置安装 Conan 依赖"
         },
         {
-            "label": "Build",
+            "label": "Conan Install (Linux Release)",
+            "type": "shell",
+            "command": "conan",
+            "args": [
+                "install",
+                ".",
+                "--output-folder=build/linux-release",
+                "--build=missing",
+                "-s", "build_type=Release"
+            ],
+            "problemMatcher": [],
+            "detail": "为 Linux Release 配置安装 Conan 依赖"
+        },
+        {
+            "label": "Conan Install (AArch64 Debug)",
+            "type": "shell",
+            "command": "conan",
+            "args": [
+                "install",
+                ".",
+                "--output-folder=build/aarch64-linux-gnu-debug",
+                "--build=missing",
+                "--profile:host=./aarch64-linux-gnu", // 确保 aarch64-linux-gnu 文件在根目录
+                "--profile:build=default",
+                "-s", "build_type=Debug"
+            ],
+            "problemMatcher": [],
+            "detail": "为 AArch64 Debug 交叉编译安装 Conan 依赖"
+        },
+        // =========== 构建任务 ===========
+        {
+            "label": "Build (Debug)",
             "type": "shell",
             "command": "cmake",
             "args": [
                 "--build",
                 "--preset",
-                "Debug"
+                "linux-debug"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "detail": "Generated task for building the project"
+            "problemMatcher": ["$gcc"],
+            "detail": "构建 Debug 版本",
+            "dependsOn": [
+                "Conan Install (Linux Debug)"
+            ]
         },
         {
-            "label": "Flash",
+            "label": "Build (Release)",
             "type": "shell",
-            "command": "pyocd",
+            "command": "cmake",
             "args": [
-                "flash",
-                "--target",
-                "stm32h750xx",
-                "-O",
-                "connect_mode=under-reset",
-                "./build/Debug/STM32H750XBH6_Template.bin@0x90000000"
+                "--build",
+                "--preset",
+                "linux-release"
             ],
-            "dependsOn": "Build",
-            "problemMatcher": [],
-            "detail": "Build and flash the binary to the target device using pyOCD"
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "构建 Release 版本",
+            "dependsOn": [
+                "Conan Install (Linux Release)"
+            ]
         },
+        {
+            "label": "Build (AArch64 Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "--preset",
+                "aarch64-linux-gnu-debug"
+            ],
+            "group": "build",
+            "problemMatcher": ["$gcc"],
+            "detail": "交叉编译构建 AArch64 Debug 版本",
+            "dependsOn": [
+                "Conan Install (AArch64 Debug)"
+            ]
+        },
+        // =========== 清理任务 ===========
         {
             "label": "Clean",
             "type": "shell",
-            "command": "bash",
+            "command": "rm",
             "args": [
-                "-c",
-                "rm -rf build"
+                "-rf",
+                "build"
             ],
             "group": "build",
             "problemMatcher": [],
-            "detail": "Generated task for cleaning the build and cache directories"
+            "detail": "清理构建目录"
         }
     ]
 }
