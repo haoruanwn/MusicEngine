@@ -1,0 +1,31 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/build/",
+        "--all-scopes-completion",
+        "--completion-style=detailed",
+        "--header-insertion=never"
+    ],
+    "VsCodeTaskButtons.tasks": [
+        {
+            "label": "$(wrench) Configure",
+            "task": "CMake configure",
+            "tooltip": "Configure the project with CMake"
+        },
+        {
+            "label": "$(tools) Build",
+            "task": "Build",
+            "tooltip": "Build the project"
+        },
+        {
+            "label": "$(rocket) Flash",
+            "task": "Flash",
+            "tooltip": "Build and Flash the project to the target device"
+        },
+        {
+            "label": "$(trash) Clean",
+            "task": "Clean",
+            "tooltip": "Clean the build directory"
+        }
+    ]
+}

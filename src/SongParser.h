@@ -11,22 +11,22 @@
 #include <vector>
 
 
-#include "../include/Song.h"
+#include "Song.h"
 
 // 包含所有实现所需的 TagLib 内部头文件
 #include <iostream>
 #include "tag.h"
 #include "fileref.h"
 #include "audioproperties.h"
-#include "mpeg/mpegfile.h"
-#include "mpeg/id3v2/id3v2tag.h"
-#include "mpeg/id3v2/frames/attachedpictureframe.h"
-#include "mp4/mp4file.h"
-#include "mp4/mp4tag.h"
-#include "mp4/mp4item.h"
-#include "mp4/mp4coverart.h"
-#include "flac/flacfile.h"
-#include "flac/flacfile.h"
+#include "mpegfile.h"
+#include "id3v2tag.h"
+#include "attachedpictureframe.h"
+#include "mp4file.h"
+#include "mp4tag.h"
+#include "mp4item.h"
+#include "mp4coverart.h"
+#include "flacfile.h"
+
 
 
 namespace SongParser {

@@ -1,0 +1,65 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake configure",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--preset",
+                "Debug"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "Generated task for CMake configure"
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "--preset",
+                "Debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "Generated task for building the project"
+        },
+        {
+            "label": "Flash",
+            "type": "shell",
+            "command": "pyocd",
+            "args": [
+                "flash",
+                "--target",
+                "stm32h750xx",
+                "-O",
+                "connect_mode=under-reset",
+                "./build/Debug/STM32H750XBH6_Template.bin@0x90000000"
+            ],
+            "dependsOn": "Build",
+            "problemMatcher": [],
+            "detail": "Build and flash the binary to the target device using pyOCD"
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "rm -rf build"
+            ],
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "Generated task for cleaning the build and cache directories"
+        }
+    ]
+}
