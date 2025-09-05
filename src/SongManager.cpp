@@ -5,7 +5,7 @@
 #include <mutex>
 #include "SongParser.hpp"
 #include "spdlog/sinks/stdout_color_sinks.h"
-#include "ParserLogger.hpp"
+#include "spdlog/spdlog.h"
 
 // Impl结构体，用于在对外暴露的头文件中隐藏私有成员
 struct SongManager::Impl {
@@ -32,8 +32,8 @@ SongManager::SongManager() : pimpl(std::make_unique<Impl>()) {
     pimpl->m_logger->set_level(spdlog::level::info);
     pimpl->m_logger->info("SongManager initialized.");
 
-    // 初始化 ParserLogger
-    ParserLog::init();
+    // 初始化 SongParser 的日志
+    SongParser::logger_init();
 }
 
 // 实现析构函数
