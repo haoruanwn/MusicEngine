@@ -1,11 +1,17 @@
 // SongManager.cpp
 
-#include "../include/SongManager.h"
+#include "SongManager.h"
 #include <algorithm>
 #include <iostream>
 #include "SongParser.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
-SongManager::SongManager() : m_isScanning(false) {}
+SongManager::SongManager() : m_isScanning(false) {
+    // 初始化日志
+    m_logger = spdlog::stdout_color_mt("SongManager");
+    m_logger->set_level(spdlog::level::info);
+    m_logger->info("SongManager initialized.");
+}
 
 // 实现析构函数
 SongManager::~SongManager() {
@@ -23,13 +29,13 @@ SongManager &SongManager::getInstance() {
 bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
     // 检查目录路径是否已设置
     if (m_directoryPaths.empty()) {
-        std::cerr << "[SongManager] 错误: 目录路径未设置。" << std::endl;
+        m_logger->error("错误: 目录路径未设置。");
         return false;
     }
 
     // 检查是否已有扫描任务正在进行
     if (m_isScanning) {
-        std::cout << "[SongManager] 错误: 上一个扫描任务仍在进行中。" << std::endl;
+        m_logger->error("错误: 上一个扫描任务仍在进行中。");
         return false;
     }
 
@@ -40,21 +46,21 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
 
     // 调用std::async启用一个异步任务（传入一个lambda表达式）
     m_scanFuture = std::async(std::launch::async, [this, pathsToScan, onScanFinished]() {
-        std::cout << "[SongManager] 后台扫描开始..." << std::endl;
+        m_logger->info("后台扫描开始...");
 
         std::vector<Song> newDatabase;
         const std::vector<std::string> supportedExtensions = {".mp3", ".m4a", ".flac"};
 
         for (const auto &dirPath: pathsToScan) {
-            std::cout << "[SongManager] ==> 正在扫描: " << dirPath << std::endl;
+            m_logger->info("正在扫描: {}", dirPath.string());
             try {
                 // recursive_directory_iterator 必须在循环内部对单个路径使用
                 for (const auto &entry: std::filesystem::recursive_directory_iterator(dirPath)) {
                     if (entry.is_regular_file()) {
 
                         // 打印出目前正在处理的文件名
-                        std::cout << "[SongManager] 正在处理: " << entry.path().string() << std::endl;
-                        
+                        m_logger->info("正在处理: {}", entry.path().string());
+
                         std::string extension = entry.path().extension().string();
                         std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
@@ -69,12 +75,12 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
                     }
                 }
             } catch (const std::filesystem::filesystem_error &e) {
-                std::cerr << "[SongManager] 文件系统错误: " << e.what() << std::endl;
+                m_logger->error("文件系统错误: {}", e.what());
             }
         }
 
         size_t count = newDatabase.size();
-        std::cout << "[SongManager] 扫描完成, 共找到 " << count << " 首歌曲." << std::endl;
+        m_logger->info("扫描完成, 共找到 {} 首歌曲.", count);
 
         {
             std::lock_guard<std::mutex> lock(m_dbMutex);
@@ -100,8 +106,10 @@ std::vector<Song> SongManager::getAllSongs() const {
 
 std::vector<Song> SongManager::searchSongs(const std::string &query) const {
     // 检查目录路径是否已设置
-    if (m_directoryPaths.empty())
-        std::cerr << "[SongManager] 错误: 目录路径未设置。" << std::endl;
+    if (m_directoryPaths.empty()) {
+        m_logger->error("错误: 目录路径未设置。");
+        return {};
+    }
 
     std::vector<Song> results;
     std::string lowerQuery = query;
@@ -122,8 +130,10 @@ std::vector<Song> SongManager::searchSongs(const std::string &query) const {
 std::vector<std::string> SongManager::getSongNames() const {
     std::vector<std::string> results;
 
-    if (m_directoryPaths.empty())
-        std::cerr << "[SongManager] 错误: 目录路径未设置。" << std::endl;
+    if (m_directoryPaths.empty()) {
+        m_logger->error("错误: 目录路径未设置。");
+        return {};
+    }
 
     for (const auto &song: m_songDatabase) {
         results.push_back(song.filePath.filename().string());

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include "Song.h"
+#include "spdlog/spdlog.h"
 
 class SongManager {
 public:
@@ -54,4 +55,7 @@ private:
 
     // std::filesystem::path m_directoryPath;
     std::vector<std::filesystem::path> m_directoryPaths;
+
+    // 日志类
+    std::shared_ptr<spdlog::logger> m_logger;
 };

@@ -11,6 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 find_package(taglib REQUIRED)
 find_package(jsoncons REQUIRED)
+find_package(spdlog REQUIRED)
 
 
 set(CMAKE_CXX_STANDARD 20)
@@ -28,9 +29,10 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     PUBLIC
+        spdlog::spdlog
+    PRIVATE
         taglib::taglib
         jsoncons
-    PRIVATE
 )
 
 
