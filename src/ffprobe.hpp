@@ -5,11 +5,13 @@
 #include <memory>
 #include <string>
 #include "Song.h"
+#include "ParserLogger.hpp"
 
 #include "jsoncons/json.hpp"
 #include "jsoncons/basic_json.hpp"
 
 // 调用ffprobe获取音频文件的元数据
+
 
 // 一个通用的执行命令并获取输出的函数
 inline std::string executeCommand(const char *cmd) {
@@ -93,8 +95,7 @@ namespace SongParser {
                 }
             }
         } catch (const std::exception &e) {
-            std::cerr << "\n[警告] 调用ffprobe或解析其输出时出错: " << e.what() << " 文件: " << filePath.string()
-                      << std::endl;
+            ParserLog::logger->warn("调用ffprobe或解析其输出时出错: {} 文件: {}", e.what(), filePath.string());
             return song;
         }
         return song;

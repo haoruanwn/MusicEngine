@@ -24,12 +24,11 @@ void printSongInfo(const Song &song, auto logger) {
                  song.year != 0 ? std::to_string(song.year) : "未知");
 }
 
-std::vector<std::filesystem::path> music_dirs = {"/home/hao/projects/SongManager/music_test",
-                                                 "/home/hao/Projects/music_system/music_test2"};
+std::vector<std::filesystem::path> music_dirs = {"/home/hao/projects/SongManager/music_test", "/home/hao/音乐"};
 
 int main() {
     // --- spdlog 初始化 ---
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v");
+    spdlog::set_pattern("[%n] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::trace);
     // --- 初始化完成 ---
 

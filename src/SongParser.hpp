@@ -12,6 +12,7 @@
 
 #include "Song.h"
 #include "ffprobe.hpp"
+#include "ParserLogger.hpp"
 
 #include <iostream>
 #include "attachedpictureframe.h"
@@ -140,8 +141,7 @@ namespace SongParser {
                 it->second(filePath, song);
             }
             catch(...) {
-                std::cerr << "\n[警告] 使用TagLib提取封面时发生未知错误。文件: " 
-                          << filePath.string() << std::endl;
+                ParserLog::logger->warn("使用TagLib提取封面时发生未知错误。文件: {}", filePath.string());
             }
         }
 

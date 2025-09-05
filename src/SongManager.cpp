@@ -1,16 +1,17 @@
-// SongManager.cpp
-
 #include "SongManager.h"
 #include <algorithm>
-#include <iostream>
-#include "SongParser.h"
+#include "SongParser.hpp"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "ParserLogger.hpp"
 
 SongManager::SongManager() : m_isScanning(false) {
-    // 初始化日志
+    // 初始化SongManager的日志
     m_logger = spdlog::stdout_color_mt("SongManager");
     m_logger->set_level(spdlog::level::info);
     m_logger->info("SongManager initialized.");
+
+    // 初始化 ParserLogger
+    ParserLog::init();
 }
 
 // 实现析构函数
