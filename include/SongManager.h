@@ -1,5 +1,3 @@
-// SongManager.h
-
 #pragma once
 
 

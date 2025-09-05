@@ -10,7 +10,7 @@ set(CMAKE_C_COMPILER   ${TOOLCHAIN_PREFIX}gcc)
 set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PREFIX}g++)
 # -----------------------------------------------------------------
 
-# 指定 sysroot，让CMake能在正确的地方找到目标系统的头文件和库
+# 指定 sysroot
 # set(CMAKE_SYSROOT "/usr/aarch64-linux-gnu/sys-root")
 
 # 设置查找策略，让 find_package, find_library 等命令只在sysroot和工具链里查找

@@ -7,15 +7,4 @@ compiler.libcxx=libstdc++11
 compiler.cppstd=20
 
 [conf]
-# 告诉Conan去加载我们的CMake工具链文件 
-# 使用 tools.cmake.cmaketoolchain:user_toolchain 来指定我们自己的工具链
-# ${profile_dir} 是一个conan变量，代表当前profile文件所在的目录
-# 目前测试只有绝对路径可以被正常识别
 tools.cmake.cmaketoolchain:user_toolchain=["/home/hao/projects/SongManager/cmake/aarch64-toolchain.cmake"]
-# tools.build:compiler_executables={"c": "aarch64-linux-gnu-gcc", "cpp": "aarch64-linux-gnu-g++"}
-# --------------------------------------------------------------------------------
-
-# 如果使用环境变量里的编译器，就直接这样指定
-# [env]
-# CC=aarch64-linux-gnu-gcc
-# CXX=aarch64-linux-gnu-g++

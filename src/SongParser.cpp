@@ -1,6 +1,5 @@
 #include "SongParser.hpp" // 首先包含我们自己的头文件
 
-
 #include <array>
 #include <cstdio>
 #include <fstream>
@@ -10,33 +9,26 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
+
 namespace SongParser {
 
-    // 在.cpp文件中定义logger变量
     std::shared_ptr<spdlog::logger> logger;
 
-    // 在.cpp文件中提供init函数的完整实现
     void logger_init() {
         if (!logger) {
             logger = spdlog::stdout_color_mt("SongParser");
             logger->set_level(spdlog::level::info);
         }
     }
-} // namespace SongParser
 
-
-namespace SongParser {
-
-    // 内部辅助函数 (放在匿名命名空间中，使其仅在本文件可见)
     namespace {
-
         std::string executeCommand(const char *cmd) {
             std::array<char, 128> buffer;
             std::string result;
             std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
             if (!pipe) {
                 logger->critical("popen() failed for command: {}", cmd);
-                return ""; 
+                return "";
             }
             while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
                 result += buffer.data();
@@ -46,7 +38,7 @@ namespace SongParser {
 
         std::string escapeSingleQuotes(const std::string &s) {
             std::string escaped;
-            for (char c : s) {
+            for (char c: s) {
                 if (c == '\'') {
                     escaped += "'\\''"; // a'b -> 'a'\''b'
                 } else {
@@ -76,16 +68,24 @@ namespace SongParser {
                     }
                     if (format.contains("tags")) {
                         const auto &tags = format["tags"];
-                        if (tags.contains("Title")) song.title = tags["Title"].as_string();
-                        if (tags.contains("Artist")) song.artist = tags["Artist"].as_string();
-                        if (tags.contains("Album")) song.album = tags["Album"].as_string();
-                        if (tags.contains("Genre")) song.genre = tags["Genre"].as_string();
+                        if (tags.contains("Title"))
+                            song.title = tags["Title"].as_string();
+                        if (tags.contains("Artist"))
+                            song.artist = tags["Artist"].as_string();
+                        if (tags.contains("Album"))
+                            song.album = tags["Album"].as_string();
+                        if (tags.contains("Genre"))
+                            song.genre = tags["Genre"].as_string();
                         if (tags.contains("date")) {
-                            try { song.year = std::stoi(tags["date"].as_string().substr(0, 4)); }
-                            catch (...) {}
+                            try {
+                                song.year = std::stoi(tags["date"].as_string().substr(0, 4));
+                            } catch (...) {
+                            }
                         } else if (tags.contains("TYER")) {
-                            try { song.year = std::stoi(tags["TYER"].as_string()); }
-                            catch (...) {}
+                            try {
+                                song.year = std::stoi(tags["TYER"].as_string());
+                            } catch (...) {
+                            }
                         }
                     }
                 }
@@ -97,16 +97,19 @@ namespace SongParser {
         }
 
         void extractCoverArtWithFFmpeg(Song &song) {
-            std::filesystem::path tempCoverPath = std::filesystem::temp_directory_path() / (song.filePath.stem().string() + "_cover.jpg");
+            std::filesystem::path tempCoverPath =
+                    std::filesystem::temp_directory_path() / (song.filePath.stem().string() + "_cover.jpg");
             std::string escapedInputPath = escapeSingleQuotes(song.filePath.string());
             std::string escapedOutputPath = escapeSingleQuotes(tempCoverPath.string());
-            std::string command = "ffmpeg -y -v error -i " + escapedInputPath + " -an -c:v copy -frames:v 1 " + escapedOutputPath;
+            std::string command =
+                    "ffmpeg -y -v error -i " + escapedInputPath + " -an -c:v copy -frames:v 1 " + escapedOutputPath;
             try {
                 executeCommand(command.c_str());
                 if (std::filesystem::exists(tempCoverPath) && !std::filesystem::is_empty(tempCoverPath)) {
                     std::ifstream file(tempCoverPath, std::ios::binary);
                     if (file) {
-                        song.coverArt = std::vector<char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                        song.coverArt = std::vector<char>((std::istreambuf_iterator<char>(file)),
+                                                          std::istreambuf_iterator<char>());
                         song.coverArtMimeType = "image/jpeg";
                     }
                     std::filesystem::remove(tempCoverPath);
@@ -116,7 +119,7 @@ namespace SongParser {
             }
         }
 
-    } // 匿名命名空间结束
+    } // namespace
 
     std::optional<Song> createSongFromFile(const std::filesystem::path &filePath) {
         auto songOpt = getMetadataWithFFprobe(filePath);

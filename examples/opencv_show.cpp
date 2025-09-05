@@ -26,7 +26,6 @@ void displaySongWithCover(const Song &song) {
     std::string album_text = "Album: " + (song.album.empty() ? "Unknown" : song.album);
 
     // 在图像上绘制文本
-    // 为了让文字更清晰，我们可以在文字下面先绘制一个半透明的背景矩形
     cv::Mat overlay;
     image.copyTo(overlay);
     cv::rectangle(overlay, cv::Rect(10, 10, 400, 100), cv::Scalar(0, 0, 0), -1);

@@ -21,7 +21,7 @@ void printSongInfo(const Song &song, auto logger) {
                  "  年份: {}",
                  song.title.empty() ? "未知" : song.title, song.artist.empty() ? "未知" : song.artist,
                  song.album.empty() ? "未知" : song.album,
-                 song.filePath.string(), // .string() 转换
+                 song.filePath.string(), 
                  song.coverArt.size(), song.coverArtMimeType.empty() ? "未知" : song.coverArtMimeType, song.duration,
                  song.year != 0 ? std::to_string(song.year) : "未知");
 }
@@ -31,7 +31,7 @@ int main() {
     // --- spdlog 初始化 ---
     spdlog::set_pattern("[%n] [%^%l%$] %v");
     spdlog::set_level(spdlog::level::trace);
-    // --- 初始化完成 ---
+
 
     // 创建一个example中用的日志类
     auto logger = spdlog::stdout_color_mt("example");
@@ -52,14 +52,14 @@ int main() {
         logger->info("[主线程] 扫描任务已成功启动。");
     }
 
-    // 4. 在扫描进行中，立即尝试再次启动扫描
+    // 在扫描进行中，立即尝试再次启动扫描
     logger->info("[主线程] 在扫描期间，立即再次请求扫描...");
     if (!manager.startScan(scanCallback)) {
         // 这其实是一个正常的业务逻辑，用 warn 级别比较合适
         logger->warn("[主线程] 请求被拒绝，正如预期。因为已有任务在进行中。");
     }
 
-    // 5. 模拟主线程的事件循环
+    // 模拟主线程的事件循环
     logger->info("[主线程] 等待扫描结束...");
     while (manager.isScanning()) {
         // 安静等待，不再打印点
@@ -67,7 +67,7 @@ int main() {
     }
     logger->info("[主线程] 检测到 isScanning() 返回 false，扫描已结束。");
 
-    // 6. 从 SongManager 获取所有歌曲并打印
+    // 从 SongManager 获取所有歌曲并打印
     logger->info("[主线程] 从 SongManager 获取最终歌曲列表:");
     auto allSongs = manager.getAllSongs();
     if (allSongs.empty()) {
@@ -79,14 +79,14 @@ int main() {
         }
     }
 
-    // 7. 演示搜索功能 
+    // 演示搜索功能 
     logger->info("演示搜索：搜索标题包含 '轻涟' 的歌曲:");
     auto searchResults = manager.searchSongs("轻涟");
     for (const auto &song: searchResults) {
         printSongInfo(song, logger);
     }
 
-    // 8. 调用 displaySongWithCover 显示第一首搜索结果的完整信息
+    // 调用 displaySongWithCover 显示第一首搜索结果的完整信息
     if (!searchResults.empty()) {
         logger->info("显示第一首搜索结果的封面及信息...");
         displaySongWithCover(searchResults[0]);
