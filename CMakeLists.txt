@@ -9,7 +9,6 @@ option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" ON)
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-find_package(taglib REQUIRED)
 find_package(jsoncons REQUIRED)
 find_package(spdlog REQUIRED)
 
@@ -29,11 +28,9 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    PUBLIC
-        spdlog::spdlog
     PRIVATE
-        taglib::taglib
         jsoncons
+        spdlog::spdlog
 )
 
 
@@ -42,3 +39,19 @@ if(SONGMANAGER_BUILD_EXAMPLES)
     add_subdirectory(examples)
     message(STATUS "Building examples...")
 endif()
+
+# 安装规则
+include(CMakePackageConfigHelpers)
+# 根据模板 SongManagerConfig.cmake.in 生成 SongManagerConfig.cmake
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/SongManagerConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/SongManagerConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/SongManager
+    PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
+)
+
+# 安装生成的Config文件
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/SongManagerConfig.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/SongManager
+)

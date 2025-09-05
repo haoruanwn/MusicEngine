@@ -2,8 +2,10 @@
 #include <thread>
 #include "SongManager.h"
 #include "opencv_show.hpp"
-#include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/spdlog.h"
+
+std::vector<std::filesystem::path> music_dirs = {"/home/hao/projects/SongManager/music_test"};
 
 
 // 用来打印歌曲信息
@@ -24,7 +26,6 @@ void printSongInfo(const Song &song, auto logger) {
                  song.year != 0 ? std::to_string(song.year) : "未知");
 }
 
-std::vector<std::filesystem::path> music_dirs = {"/home/hao/projects/SongManager/music_test", "/home/hao/音乐"};
 
 int main() {
     // --- spdlog 初始化 ---
@@ -43,11 +44,9 @@ int main() {
 
     manager.setDirectoryPath(music_dirs);
 
-    auto scanCallback = [&logger](size_t count) {
-        logger->info("[回调] 扫描完成, 共找到 {} 首歌曲.", count);
-    };
+    auto scanCallback = [&logger](size_t count) { logger->info("[回调] 扫描完成, 共找到 {} 首歌曲.", count); };
 
-    // 3. 首次尝试启动扫描
+    // 首次启动扫描
     logger->info("[主线程] 第一次请求 SongManager 开始扫描...");
     if (manager.startScan(scanCallback)) {
         logger->info("[主线程] 扫描任务已成功启动。");
@@ -80,19 +79,19 @@ int main() {
         }
     }
 
-    // 7. 演示搜索功能
-    logger->info("[主线程] 演示搜索：搜索标题包含 '原色' 的歌曲:");
-    auto searchResults = manager.searchSongs("原色");
+    // 7. 演示搜索功能 
+    logger->info("演示搜索：搜索标题包含 '轻涟' 的歌曲:");
+    auto searchResults = manager.searchSongs("轻涟");
     for (const auto &song: searchResults) {
         printSongInfo(song, logger);
     }
 
-    // 8. 新增：显示搜索到的第一首歌的封面
+    // 8. 调用 displaySongWithCover 显示第一首搜索结果的完整信息
     if (!searchResults.empty()) {
-        logger->info("[主线程] 显示第一首搜索结果的封面...");
+        logger->info("显示第一首搜索结果的封面及信息...");
         displaySongWithCover(searchResults[0]);
     } else {
-        logger->info("[主线程] 未搜索到相关歌曲，无法显示封面。");
+        logger->info("未搜索到相关歌曲，无法显示封面。");
     }
 
     logger->info("--- 系统关闭 ---");
@@ -100,10 +99,8 @@ int main() {
     // 打印获取到的歌曲名称
     auto songNames = manager.getSongNames();
     logger->info("扫描到的所有歌曲文件名:");
-    for (const auto &songName : songNames) {
+    for (const auto &songName: songNames) {
         logger->info("  - {}", songName);
     }
     return 0;
 }
-
-

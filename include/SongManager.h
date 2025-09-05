@@ -2,23 +2,20 @@
 
 #pragma once
 
-#include <atomic>
+
 #include <filesystem>
 #include <functional>
-#include <future>
-#include <mutex>
 #include <string>
 #include <vector>
 #include "Song.h"
-#include "spdlog/spdlog.h"
+
 
 class SongManager {
 public:
     static SongManager &getInstance();
-
     SongManager(const SongManager &) = delete;
     SongManager &operator=(const SongManager &) = delete;
-
+    
     /**
      * @brief 异步扫描音乐目录.
      * 如果当前已有扫描任务正在进行，则此函数会立即返回false.
@@ -43,19 +40,8 @@ public:
     void setDirectoryPath(const std::vector<std::filesystem::path> &directoryPaths);
 
 private:
-    SongManager();
+    struct Impl; 
+    std::unique_ptr<Impl> pimpl;
+    SongManager(); 
     ~SongManager();
-
-    std::vector<Song> m_songDatabase;
-    mutable std::mutex m_dbMutex;
-
-    std::future<void> m_scanFuture;
-
-    std::atomic<bool> m_isScanning;
-
-    // std::filesystem::path m_directoryPath;
-    std::vector<std::filesystem::path> m_directoryPaths;
-
-    // 日志类
-    std::shared_ptr<spdlog::logger> m_logger;
 };

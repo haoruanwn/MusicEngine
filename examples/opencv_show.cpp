@@ -45,7 +45,8 @@ void displaySongWithCover(const Song &song) {
     cv::putText(image, album_text, cv::Point(20, 100), fontFace, fontScale, color, thickness);
 
     // 5. 创建窗口并显示图像
-    std::string window_name = "Song Info: " + song.title;
+    // std::string window_name = "Song Info: " + song.title;
+    std::string window_name = "Song Info";
     cv::imshow(window_name, image);
 
     // 6. 等待用户按键后关闭窗口

@@ -1,8 +1,7 @@
-// song.h
 #pragma once
 
-#include <cstdint> // 为了使用 int32_t 等类型，更明确
-#include <filesystem> // C++17: 引入文件系统库
+#include <cstdint> 
+#include <filesystem> 
 #include <string>
 #include <vector>
 
