@@ -7,7 +7,7 @@
 
 void printSongInfo(const Song &song);
 
-std::vector<std::filesystem::path> music_dirs = {"/home/hao/音乐",
+std::vector<std::filesystem::path> music_dirs = {"/home/hao/projects/SongManager/music_test",
                                                  "/home/hao/Projects/music_system/music_test2"};
 
 int main() {

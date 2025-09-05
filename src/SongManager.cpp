@@ -51,6 +51,10 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
                 // recursive_directory_iterator 必须在循环内部对单个路径使用
                 for (const auto &entry: std::filesystem::recursive_directory_iterator(dirPath)) {
                     if (entry.is_regular_file()) {
+
+                        // 打印出目前正在处理的文件名
+                        std::cout << "[SongManager] 正在处理: " << entry.path().string() << std::endl;
+                        
                         std::string extension = entry.path().extension().string();
                         std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 

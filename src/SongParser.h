@@ -13,20 +13,101 @@
 #include "Song.h"
 
 #include <iostream>
-#include "tag.h"
-#include "fileref.h"
-#include "audioproperties.h"
-#include "mpegfile.h"
-#include "id3v2tag.h"
 #include "attachedpictureframe.h"
-#include "mp4file.h"
-#include "mp4tag.h"
-#include "mp4item.h"
-#include "mp4coverart.h"
+#include "audioproperties.h"
+#include "fileref.h"
 #include "flacfile.h"
+#include "id3v2tag.h"
+#include "mp4coverart.h"
+#include "mp4file.h"
+#include "mp4item.h"
+#include "mp4tag.h"
+#include "mpegfile.h"
+#include "tag.h"
 
 
 namespace SongParser {
+
+    // 每种音乐类型，提取封面的代码都不一样，但其他部分是通用的
+    // 定义一个模板结构体作为策略
+    template<typename T>
+    struct CoverArtExtractor;
+    // 针对不同格式，特化这个结构体
+
+    // mp3
+    template<>
+    struct CoverArtExtractor<TagLib::MPEG::File> {
+        static void extract(const std::filesystem::path &filePath, Song &song) {
+            TagLib::MPEG::File file(filePath.c_str(), false);
+            if (!file.isValid() || !file.hasID3v2Tag())
+                return;
+
+            if (auto id3v2tag = file.ID3v2Tag()) {
+                const auto frameList = id3v2tag->frameList("APIC");
+                if (!frameList.isEmpty()) {
+                    if (auto picFrame = dynamic_cast<TagLib::ID3v2::AttachedPictureFrame *>(frameList.front())) {
+                        song.coverArt.assign(picFrame->picture().data(),
+                                             picFrame->picture().data() + picFrame->picture().size());
+                        if (!picFrame->mimeType().isEmpty())
+                            song.coverArtMimeType = picFrame->mimeType().to8Bit(true);
+                    }
+                }
+            }
+        }
+    };
+
+    // mp4(m4a)
+    template<>
+    struct CoverArtExtractor<TagLib::MP4::File> {
+        static void extract(const std::filesystem::path &filePath, Song &song) {
+            TagLib::MP4::File file(filePath.c_str(), false);
+            if (!file.isValid() || !file.hasMP4Tag())
+                return;
+
+            if (auto mp4Tag = file.tag()) {
+                if (mp4Tag->itemMap().contains("covr")) {
+                    const auto coverArtList = mp4Tag->itemMap()["covr"].toCoverArtList();
+                    if (!coverArtList.isEmpty()) {
+                        const auto &coverArt = coverArtList.front();
+                        song.coverArt.assign(coverArt.data().data(), coverArt.data().data() + coverArt.data().size());
+                        if (coverArt.format() == TagLib::MP4::CoverArt::JPEG) {
+                            song.coverArtMimeType = "image/jpeg";
+                        } else if (coverArt.format() == TagLib::MP4::CoverArt::PNG) {
+                            song.coverArtMimeType = "image/png";
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    // flac
+    template<>
+    struct CoverArtExtractor<TagLib::FLAC::File> {
+        static void extract(const std::filesystem::path &filePath, Song &song) {
+            TagLib::FLAC::File file(filePath.c_str(), false);
+            if (!file.isValid())
+                return;
+
+            const auto picList = file.pictureList();
+            if (!picList.isEmpty()) {
+                TagLib::FLAC::Picture *flacPic = picList.front();
+                song.coverArt.assign(flacPic->data().data(), flacPic->data().data() + flacPic->data().size());
+                if (!flacPic->mimeType().isEmpty())
+                    song.coverArtMimeType = flacPic->mimeType().to8Bit(true);
+            }
+        }
+    };
+
+    // 定义一个函数指针类型，用于指向我们的提取策略
+    using CoverArtExtractFunc = void (*)(const std::filesystem::path &, Song &);
+
+    // 创建一个从扩展名到提取函数的映射表
+    const std::map<std::string, CoverArtExtractFunc> g_coverArtExtractors = {
+            {".mp3", &CoverArtExtractor<TagLib::MPEG::File>::extract},
+            {".m4a", &CoverArtExtractor<TagLib::MP4::File>::extract},
+            {".flac", &CoverArtExtractor<TagLib::FLAC::File>::extract}};
+
 
     /**
      * @brief 从一个音频文件中解析元数据和封面.
@@ -36,10 +117,7 @@ namespace SongParser {
      * @return 如果解析成功, 返回一个包含 Song 数据的 std::optional; 否则返回 std::nullopt.
      */
     inline std::optional<Song> createSongFromFile(const std::filesystem::path &filePath) {
-        // 使用C风格字符串路径创建FileRef，兼容性更好
         TagLib::FileRef fileRef(filePath.c_str());
-
-        // 检查文件是否有效，以及是否包含标签
         if (fileRef.isNull() || !fileRef.tag()) {
             std::cerr << "Error: Could not read tags from file: " << filePath << std::endl;
             return std::nullopt;
@@ -48,71 +126,31 @@ namespace SongParser {
         Song song;
         TagLib::Tag *tag = fileRef.tag();
 
-        // -- 1. 读取通用标签 (这部分代码对所有格式都有效) --
-        song.title = tag->title().to8Bit(true);
-        song.artist = tag->artist().to8Bit(true);
-        song.album = tag->album().to8Bit(true);
-        song.genre = tag->genre().to8Bit(true);
+        // -- 读取通用标签 --
+        if (!tag->title().isEmpty())
+            song.title = tag->title().to8Bit(true);
+        if (!tag->artist().isEmpty())
+            song.artist = tag->artist().to8Bit(true);
+        if (!tag->album().isEmpty())
+            song.album = tag->album().to8Bit(true);
+        if (!tag->genre().isEmpty())
+            song.genre = tag->genre().to8Bit(true);
         if (tag->year() != 0)
             song.year = tag->year();
         song.filePath = filePath;
-
         if (fileRef.audioProperties()) {
-            // 获取以秒为单位的时长
             song.duration = fileRef.audioProperties()->lengthInSeconds();
         }
 
-        // -- 2. 读取封面 (这部分是格式相关的) --
+        // -- 读取封面 (通过调度器完成) --
         std::string extension = filePath.extension().string();
         std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
-        if (extension == ".mp3") {
-            TagLib::MPEG::File mpegFile(filePath.c_str(), false);
-            if (mpegFile.isValid() && mpegFile.hasID3v2Tag()) {
-                if (auto id3v2tag = mpegFile.ID3v2Tag()) {
-                    const auto frameList = id3v2tag->frameList("APIC");
-                    if (!frameList.isEmpty()) {
-                        if (auto picFrame = dynamic_cast<TagLib::ID3v2::AttachedPictureFrame *>(frameList.front())) {
-                            song.coverArt.assign(picFrame->picture().data(),
-                                                 picFrame->picture().data() + picFrame->picture().size());
-                            song.coverArtMimeType = picFrame->mimeType().to8Bit(true);
-                        }
-                    }
-                }
-            }
-        } else if (extension == ".m4a") {
-            TagLib::MP4::File mp4File(filePath.c_str(), false);
-            if (mp4File.isValid() && mp4File.hasMP4Tag()) {
-                if (auto mp4Tag = mp4File.tag()) {
-                    // 在MP4中，封面存储在名为 "covr" 的 item 中
-                    if (mp4Tag->itemMap().contains("covr")) {
-                        const TagLib::MP4::Item coverItem = mp4Tag->itemMap()["covr"];
-                        const TagLib::MP4::CoverArtList coverArtList = coverItem.toCoverArtList();
-                        if (!coverArtList.isEmpty()) {
-                            const TagLib::MP4::CoverArt &coverArt = coverArtList.front();
-                            song.coverArt.assign(coverArt.data().data(),
-                                                 coverArt.data().data() + coverArt.data().size());
-                            // MP4 封面格式通常是 JPEG 或 PNG
-                            if (coverArt.format() == TagLib::MP4::CoverArt::JPEG) {
-                                song.coverArtMimeType = "image/jpeg";
-                            } else if (coverArt.format() == TagLib::MP4::CoverArt::PNG) {
-                                song.coverArtMimeType = "image/png";
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (extension == ".flac") { // <-- 新增对 FLAC 的支持
-            TagLib::FLAC::File flacFile(filePath.c_str(), false);
-            if (flacFile.isValid()) {
-                // FLAC通过pictureList()获取封面列表
-                const auto picList = flacFile.pictureList();
-                if (!picList.isEmpty()) {
-                    TagLib::FLAC::Picture *flacPic = picList.front();
-                    song.coverArt.assign(flacPic->data().data(), flacPic->data().data() + flacPic->data().size());
-                    song.coverArtMimeType = flacPic->mimeType().to8Bit(true);
-                }
-            }
+        // 在映射表中查找对应的提取函数
+        auto it = g_coverArtExtractors.find(extension);
+        if (it != g_coverArtExtractors.end()) {
+            // 如果找到，就调用它
+            it->second(filePath, song);
         }
 
         return song;
