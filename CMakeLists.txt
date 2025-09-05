@@ -10,11 +10,8 @@ option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 find_package(taglib REQUIRED)
-find_package(spdlog REQUIRED)
+find_package(jsoncons REQUIRED)
 
-# 设置opencv,不是由conan管理的，直接用包管理器的
-# set(OpenCV_DIR "/usr/lib64/cmake/OpenCV")
-find_package(OpenCV REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -32,8 +29,7 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE
     PUBLIC
         taglib::taglib
-        spdlog::spdlog
-        ${OpenCV_LIBS}
+        jsoncons
     PRIVATE
 )
 

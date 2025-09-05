@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "Song.h"
+#include "ffprobe.hpp"
 
 #include <iostream>
 #include "attachedpictureframe.h"
@@ -110,50 +111,40 @@ namespace SongParser {
 
 
     /**
-     * @brief 从一个音频文件中解析元数据和封面.
-     * (函数定义在头文件中，需要声明为 inline)
-     *
-     * @param filePath 指向音频文件的 std::filesystem::path 对象.
-     * @return 如果解析成功, 返回一个包含 Song 数据的 std::optional; 否则返回 std::nullopt.
+     * @brief [重构后] 从音频文件中解析元数据和封面.
+     * 此函数首先使用 ffprobe 安全地获取元数据，
+     * 然后使用 TagLib 尝试获取封面。
      */
     inline std::optional<Song> createSongFromFile(const std::filesystem::path &filePath) {
-        TagLib::FileRef fileRef(filePath.c_str());
-        if (fileRef.isNull() || !fileRef.tag()) {
-            std::cerr << "Error: Could not read tags from file: " << filePath << std::endl;
+        
+        // 步骤 1: 调用 ffprobe 安全地获取所有文本元数据
+        auto songOpt = getMetadataWithFFprobe(filePath);
+
+        // 如果 ffprobe 彻底失败 (例如命令执行失败)，则直接返回
+        if (!songOpt) {
             return std::nullopt;
         }
+        
+        // 从 optional 中取出 Song 对象
+        Song song = *songOpt;
 
-        Song song;
-        TagLib::Tag *tag = fileRef.tag();
-
-        // -- 读取通用标签 --
-        if (!tag->title().isEmpty())
-            song.title = tag->title().to8Bit(true);
-        if (!tag->artist().isEmpty())
-            song.artist = tag->artist().to8Bit(true);
-        if (!tag->album().isEmpty())
-            song.album = tag->album().to8Bit(true);
-        if (!tag->genre().isEmpty())
-            song.genre = tag->genre().to8Bit(true);
-        if (tag->year() != 0)
-            song.year = tag->year();
-        song.filePath = filePath;
-        if (fileRef.audioProperties()) {
-            song.duration = fileRef.audioProperties()->lengthInSeconds();
-        }
-
-        // -- 读取封面 (通过调度器完成) --
+        // 步骤 2: 在已有元数据的基础上，调用 TagLib 策略来提取封面
+        // (这一步仍然需要 TagLib，但风险已大大降低)
         std::string extension = filePath.extension().string();
         std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
-        // 在映射表中查找对应的提取函数
         auto it = g_coverArtExtractors.find(extension);
         if (it != g_coverArtExtractors.end()) {
-            // 如果找到，就调用它
-            it->second(filePath, song);
+            try {
+                // 如果找到，就调用它来填充封面信息
+                it->second(filePath, song);
+            }
+            catch(...) {
+                std::cerr << "\n[警告] 使用TagLib提取封面时发生未知错误。文件: " 
+                          << filePath.string() << std::endl;
+            }
         }
 
         return song;
     }
-
 } // namespace SongParser
