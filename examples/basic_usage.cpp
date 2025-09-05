@@ -1,17 +1,14 @@
-// main.cpp
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include "../include/SongManager.h"
-
+#include "opencv_show.hpp"
 
 
 void printSongInfo(const Song &song);
 
-std::vector<std::filesystem::path> music_dirs = {
-    "/home/hao/Projects/music_system/music_test",
-    "/home/hao/Projects/music_system/music_test2"
-};
+std::vector<std::filesystem::path> music_dirs = {"/home/hao/音乐",
+                                                 "/home/hao/Projects/music_system/music_test2"};
 
 int main() {
 
@@ -66,7 +63,16 @@ int main() {
         printSongInfo(song);
     }
 
+    // 8. 新增：显示搜索到的第一首歌的封面
+    if (!searchResults.empty()) {
+        std::cout << "\n[主线程] 显示第一首搜索结果的封面..." << std::endl;
+        displaySongWithCover(searchResults[0]);
+    } else {
+        std::cout << "\n[主线程] 未搜索到相关歌曲，无法显示封面。" << std::endl;
+    }
+
     std::cout << "\n--- 系统关闭 ---" << std::endl;
+
 
     // 打印获取到的歌曲名称
     auto songNames = manager.getSongNames();
@@ -90,4 +96,3 @@ void printSongInfo(const Song &song) {
     std::cout << "年份: " << (song.year != 0 ? std::to_string(song.year) : "未知") << std::endl;
     std::cout << "====================" << std::endl;
 }
-

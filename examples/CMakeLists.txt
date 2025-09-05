@@ -5,6 +5,7 @@ message(STATUS "Building examples for SongManager...")
 # 添加一个可执行文件目标
 add_executable(${PROJECT_NAME}
         basic_usage.cpp
+        opencv_show.cpp
 )
 
 target_link_directories(${PROJECT_NAME} PRIVATE

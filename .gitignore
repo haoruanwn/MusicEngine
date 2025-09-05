@@ -13,3 +13,7 @@ music_test/
 
 # conan生成的配置文件
 CMakeUserPresets.json
+
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
