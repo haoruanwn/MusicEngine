@@ -5,7 +5,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
-std::vector<std::filesystem::path> music_dirs = {"/home/hao/projects/SongManager/music_test"};
+std::vector<std::filesystem::path> music_dirs = {"/home/hao/projects/SongManager/music_test", "/home/hao/音乐"};
 
 
 // 用来打印歌曲信息
@@ -90,6 +90,15 @@ int main() {
         displaySongWithCover(searchResults[0]);
     } else {
         logger->info("未搜索到相关歌曲，无法显示封面。");
+    }
+
+     // === 新增：演示导出功能 ===
+    std::filesystem::path export_path = "/home/hao/projects/SongManager/song_database_export.log";
+    logger->info("[主线程] 正在尝试将数据库导出到 '{}'...", export_path.string());
+    if (manager.exportDatabaseToFile(export_path)) {
+        logger->info("[主线程] 数据库导出成功！");
+    } else {
+        logger->error("[主线程] 数据库导出失败。");
     }
 
     logger->info("--- 系统关闭 ---");

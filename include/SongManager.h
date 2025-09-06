@@ -40,6 +40,13 @@ public:
     void setDirectoryPath(const std::vector<std::filesystem::path> &directoryPaths);
     void setDirectoryPath(std::initializer_list<std::filesystem::path> directoryPaths);
 
+    /**
+     * @brief 将当前数据库中的所有歌曲信息导出到一个指定的日志文件中。
+     * @param outputPath 要写入的日志文件的完整路径。
+     * @return 如果导出成功，返回 true；如果因文件权限等问题失败，则返回 false。
+     */
+    bool exportDatabaseToFile(const std::filesystem::path& outputPath) const;
+
 private:
     struct Impl; 
     std::unique_ptr<Impl> pimpl;

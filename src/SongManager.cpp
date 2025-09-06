@@ -1,11 +1,15 @@
 #include "SongManager.h"
 #include <algorithm>
 #include <atomic>
+#include <format>
+#include <string>
 #include <future>
 #include <mutex>
 #include "SongParser.hpp"
+#include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
+
 
 // Impl结构体，用于在对外暴露的头文件中隐藏私有成员
 struct SongManager::Impl {
@@ -183,4 +187,71 @@ void SongManager::setDirectoryPath(const std::filesystem::path &directoryPath) {
 
 void SongManager::setDirectoryPath(std::initializer_list<std::filesystem::path> directoryPaths) {
     pimpl->m_directoryPaths = directoryPaths;
+}
+
+
+bool SongManager::exportDatabaseToFile(const std::filesystem::path &outputPath) const {
+    pimpl->m_logger->info("请求导出数据库到文件: {}", outputPath.string());
+
+    // 动态创建专用于文件输出的logger
+    std::shared_ptr<spdlog::logger> file_logger;
+    try {
+        // 使用文件名作为logger名，确保唯一性。如果logger已存在，spdlog会抛异常。
+        auto file_sink =
+                std::make_shared<spdlog::sinks::basic_file_sink_mt>(outputPath.string(), true); // true表示覆盖旧文件
+        file_logger = std::make_shared<spdlog::logger>("database_exporter", file_sink);
+
+        // 设置文件日志的格式，不需要包含 logger 名和级别
+        file_logger->set_pattern("%v");
+        file_logger->set_level(spdlog::level::info);
+
+    } catch (const spdlog::spdlog_ex &ex) {
+        pimpl->m_logger->error("创建导出日志文件失败: {}. 错误: {}", outputPath.string(), ex.what());
+        return false;
+    }
+
+    // 锁定数据库，保证线程安全
+    std::lock_guard<std::mutex> lock(pimpl->m_dbMutex);
+
+    if (pimpl->m_songDatabase.empty()) {
+        pimpl->m_logger->warn("数据库为空，没有内容可以导出。");
+        file_logger->info("--- 数据库为空 ---");
+        return true; // 操作本身是成功的
+    }
+
+    // 使用std::format把时间信息格式化为字符串
+    const auto now = std::chrono::system_clock::now();
+    const std::string formatted_time = std::format("{:%Y-%m-%d %H:%M:%S}", now);
+
+    file_logger->info("--- 歌曲数据库导出 ---");
+    file_logger->info("共 {} 首歌曲", pimpl->m_songDatabase.size());
+    file_logger->info("导出时间: {}", formatted_time);
+    file_logger->info("----------------------\n");
+
+
+    // 遍历数据库并格式化输出
+    for (const auto &song: pimpl->m_songDatabase) {
+        auto format_field = [](const std::string &value) { return value.empty() ? "未知" : value; };
+
+        // 格式化输出字符串
+        std::string song_info =
+                fmt::format("标题: {}\n"
+                            "艺术家: {}\n"
+                            "专辑: {}\n"
+                            "流派: {}\n"
+                            "年份: {}\n"
+                            "时长: {} 秒\n"
+                            "文件路径: {}\n"
+                            "封面大小: {} 字节\n"
+                            "----------------------",
+                            format_field(song.title), format_field(song.artist), format_field(song.album),
+                            format_field(song.genre), song.year == 0 ? "未知" : std::to_string(song.year),
+                            song.duration, song.filePath.string(), song.coverArt.size());
+
+        // 写入文件
+        file_logger->info(song_info);
+    }
+
+    pimpl->m_logger->info("数据库成功导出到: {}", outputPath.string());
+    return true;
 }
