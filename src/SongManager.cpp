@@ -16,6 +16,9 @@ struct SongManager::Impl {
     std::vector<std::filesystem::path> m_directoryPaths;
     std::shared_ptr<spdlog::logger> m_logger;
 
+    // 支持的音乐文件拓展名
+    const std::vector<std::string> supportedExtensions = {".mp3", ".m4a", ".flac"};
+
     // Impl的构造函数，负责初始化
     Impl() {
         m_logger = spdlog::stdout_color_mt("SongManager");
@@ -67,12 +70,12 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
     // 复制一份路径，确保在异步任务中使用的路径不会被修改
     auto pathsToScan = pimpl->m_directoryPaths;
 
-    // 调用std::async启用一个异步任务（传入一个lambda表达式）
+    // 调用std::async启用一个异步任务
     pimpl->m_scanFuture = std::async(std::launch::async, [this, pathsToScan, onScanFinished]() {
         pimpl->m_logger->info("后台扫描开始...");
 
         std::vector<Song> newDatabase;
-        const std::vector<std::string> supportedExtensions = {".mp3", ".m4a", ".flac"};
+
 
         for (const auto &dirPath: pathsToScan) {
             pimpl->m_logger->info("正在扫描: {}", dirPath.string());
@@ -87,8 +90,11 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
                         std::string extension = entry.path().extension().string();
                         std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
-                        for (const auto &supExt: supportedExtensions) {
+                        // 检查文件扩展名是否在支持的列表中
+                        for (const auto &supExt: pimpl->supportedExtensions) {
                             if (extension == supExt) {
+
+                                // 解析文件并添加到数据库
                                 if (auto songOpt = SongParser::createSongFromFile(entry.path())) {
                                     newDatabase.push_back(*songOpt);
                                 }
@@ -99,6 +105,8 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
                 }
             } catch (const std::filesystem::filesystem_error &e) {
                 pimpl->m_logger->error("文件系统错误: {}", e.what());
+            } catch (...) {
+                pimpl->m_logger->error("扫描目录时发生未知错误: {}", dirPath.string());
             }
         }
 
@@ -110,6 +118,7 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
             pimpl->m_songDatabase = std::move(newDatabase);
         }
 
+        // 调用回调函数通知扫描完成
         if (onScanFinished) {
             onScanFinished(count);
         }
@@ -119,6 +128,7 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
 
     return true;
 }
+
 
 bool SongManager::isScanning() const { return pimpl->m_isScanning; }
 
@@ -161,18 +171,19 @@ std::vector<std::string> SongManager::getSongNames() const {
     for (const auto &song: pimpl->m_songDatabase) {
         results.push_back(song.filePath.filename().string());
     }
+
     return results;
 }
 
 // setDirectoryPath 方法设定中只能执行一次，所以每次执行的时候清理之前的
 void SongManager::setDirectoryPath(const std::vector<std::filesystem::path> &directoryPaths) {
-    // 清空容器
-    pimpl->m_directoryPaths.clear();
     pimpl->m_directoryPaths = directoryPaths;
 }
 
 void SongManager::setDirectoryPath(const std::filesystem::path &directoryPath) {
-    // 清空容器
-    pimpl->m_directoryPaths.clear();
     pimpl->m_directoryPaths.push_back(directoryPath);
+}
+
+void SongManager::setDirectoryPath(std::initializer_list<std::filesystem::path> directoryPaths) {
+    pimpl->m_directoryPaths = directoryPaths;
 }

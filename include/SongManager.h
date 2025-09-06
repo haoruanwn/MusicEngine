@@ -22,6 +22,7 @@ public:
      */
     bool startScan(const std::function<void(size_t)> &onScanFinished = nullptr);
 
+
     /**
      * @brief 检查当前是否正在扫描.
      * @return 如果正在扫描则返回true.
@@ -34,8 +35,10 @@ public:
     // 用以获取目前扫描到的歌曲名
     std::vector<std::string> getSongNames() const;
 
+    // 设置音乐目录路径
     void setDirectoryPath(const std::filesystem::path &directoryPath);
     void setDirectoryPath(const std::vector<std::filesystem::path> &directoryPaths);
+    void setDirectoryPath(std::initializer_list<std::filesystem::path> directoryPaths);
 
 private:
     struct Impl; 

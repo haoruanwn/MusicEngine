@@ -20,9 +20,8 @@ void printSongInfo(const Song &song, auto logger) {
                  "  时长: {} 秒\n"
                  "  年份: {}",
                  song.title.empty() ? "未知" : song.title, song.artist.empty() ? "未知" : song.artist,
-                 song.album.empty() ? "未知" : song.album,
-                 song.filePath.string(), 
-                 song.coverArt.size(), song.coverArtMimeType.empty() ? "未知" : song.coverArtMimeType, song.duration,
+                 song.album.empty() ? "未知" : song.album, song.filePath.string(), song.coverArt.size(),
+                 song.coverArtMimeType.empty() ? "未知" : song.coverArtMimeType, song.duration,
                  song.year != 0 ? std::to_string(song.year) : "未知");
 }
 
@@ -55,7 +54,6 @@ int main() {
     // 在扫描进行中，立即尝试再次启动扫描
     logger->info("[主线程] 在扫描期间，立即再次请求扫描...");
     if (!manager.startScan(scanCallback)) {
-        // 这其实是一个正常的业务逻辑，用 warn 级别比较合适
         logger->warn("[主线程] 请求被拒绝，正如预期。因为已有任务在进行中。");
     }
 
@@ -79,7 +77,7 @@ int main() {
         }
     }
 
-    // 演示搜索功能 
+    // 演示搜索功能
     logger->info("演示搜索：搜索标题包含 '轻涟' 的歌曲:");
     auto searchResults = manager.searchSongs("轻涟");
     for (const auto &song: searchResults) {
