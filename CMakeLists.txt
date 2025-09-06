@@ -9,16 +9,20 @@ option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" ON)
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-find_package(jsoncons REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(PkgConfig REQUIRED)
 
+pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+    libavformat
+    libavcodec
+    libavutil
+)
 
 set(CMAKE_CXX_STANDARD 20)
 
 add_library(${PROJECT_NAME} STATIC
         src/SongManager.cpp
         src/SongParser.cpp
-
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -30,8 +34,8 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     PRIVATE
-        jsoncons
         spdlog::spdlog
+        PkgConfig::FFMPEG
 )
 
 

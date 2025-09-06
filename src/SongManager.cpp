@@ -19,11 +19,8 @@ struct SongManager::Impl {
     // 支持的音乐文件拓展名
     const std::vector<std::string> supportedExtensions = {".mp3", ".m4a", ".flac"};
 
-    // Impl的构造函数，负责初始化
-    Impl() {
-        m_logger = spdlog::stdout_color_mt("SongManager");
-        m_logger->info("SongManager initialized via PIMPL.");
-    }
+    // Impl的构造函数
+    Impl() {}
 };
 
 SongManager::SongManager() : pimpl(std::make_unique<Impl>()) {

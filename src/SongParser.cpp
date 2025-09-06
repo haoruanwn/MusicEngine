@@ -1,14 +1,17 @@
 #include "SongParser.hpp" // 首先包含我们自己的头文件
 
-#include <array>
 #include <cstdio>
-#include <fstream>
 #include <memory>
 
-#include "jsoncons/json.hpp"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
+// 引入 FFmpeg 库的头文件
+extern "C" {
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libavutil/log.h>
+}
 
 namespace SongParser {
 
@@ -18,116 +21,114 @@ namespace SongParser {
         if (!logger) {
             logger = spdlog::stdout_color_mt("SongParser");
             logger->set_level(spdlog::level::info);
+
+            // 将FFmpeg的日志重定向到spdlog
+            av_log_set_level(AV_LOG_WARNING);
+            av_log_set_callback([](void *, int level, const char *fmt, va_list vl) {
+                if (level > av_log_get_level())
+                    return;
+                char buffer[1024];
+                vsnprintf(buffer, sizeof(buffer), fmt, vl);
+                // 去掉末尾的换行符
+                buffer[strcspn(buffer, "\n")] = 0;
+                logger->trace("FFmpeg: {}", buffer);
+            });
         }
     }
 
+    // 为 AVFormatContext 定义一个智能指针删除器
+    struct AVFormatContextDeleter {
+        void operator()(AVFormatContext *ptr) const {
+            if (ptr) {
+                avformat_close_input(&ptr);
+            }
+        }
+    };
+    using AVFormatContextPtr = std::unique_ptr<AVFormatContext, AVFormatContextDeleter>;
+
     namespace {
-        std::string executeCommand(const char *cmd) {
-            std::array<char, 128> buffer;
-            std::string result;
-            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
-            if (!pipe) {
-                logger->critical("popen() failed for command: {}", cmd);
-                return "";
+
+        // 使用 FFmpeg API 获取元数据
+        void getMetadataWithAPI(Song &song, AVFormatContext *formatCtx) {
+            // 1. 获取时长
+            if (formatCtx->duration != AV_NOPTS_VALUE) {
+                song.duration = static_cast<int>(formatCtx->duration / AV_TIME_BASE);
             }
-            while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-                result += buffer.data();
+
+            // 2. 获取元数据标签
+            const AVDictionary *metadata = formatCtx->metadata;
+            if (AVDictionaryEntry *tag = av_dict_get(metadata, "title", nullptr, AV_DICT_IGNORE_SUFFIX)) {
+                song.title = tag->value;
             }
-            return result;
+            if (AVDictionaryEntry *tag = av_dict_get(metadata, "artist", nullptr, AV_DICT_IGNORE_SUFFIX)) {
+                song.artist = tag->value;
+            }
+            if (AVDictionaryEntry *tag = av_dict_get(metadata, "album", nullptr, AV_DICT_IGNORE_SUFFIX)) {
+                song.album = tag->value;
+            }
+            if (AVDictionaryEntry *tag = av_dict_get(metadata, "genre", nullptr, AV_DICT_IGNORE_SUFFIX)) {
+                song.genre = tag->value;
+            }
+            if (AVDictionaryEntry *tag = av_dict_get(metadata, "date", nullptr, AV_DICT_IGNORE_SUFFIX)) {
+                try {
+                    song.year = std::stoi(std::string(tag->value).substr(0, 4));
+                } catch (...) {
+                }
+            }
         }
 
-        std::string escapeSingleQuotes(const std::string &s) {
-            std::string escaped;
-            for (char c: s) {
-                if (c == '\'') {
-                    escaped += "'\\''"; // a'b -> 'a'\''b'
-                } else {
-                    escaped += c;
-                }
+        // 提取封面图片
+        void extractCoverArtWithAPI(Song &song, AVFormatContext *formatCtx) {
+            int stream_idx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+
+            if (stream_idx < 0) {
+                logger->info("文件 '{}' 中未找到封面流。", song.filePath.string());
+                return;
             }
-            return "'" + escaped + "'";
-        }
 
-        std::optional<Song> getMetadataWithFFprobe(const std::filesystem::path &filePath) {
-            std::string escapedPath = escapeSingleQuotes(filePath.string());
-            std::string command = "ffprobe -v quiet -print_format json -show_format " + escapedPath;
+            AVStream *stream = formatCtx->streams[stream_idx];
 
-            Song song;
-            song.filePath = filePath;
+            // 检查流是否是附加图片 (Attached Picture)
+            if (stream->disposition & AV_DISPOSITION_ATTACHED_PIC && stream->attached_pic.size > 0) {
+                const AVPacket &cover_packet = stream->attached_pic;
+                song.coverArt.assign(cover_packet.data, cover_packet.data + cover_packet.size);
 
-            try {
-                std::string jsonOutput = executeCommand(command.c_str());
-                if (jsonOutput.empty() || jsonOutput.length() < 10) {
-                    return song;
+                // 尝试确定MIME类型
+                AVCodecParameters *codec_params = stream->codecpar;
+                if (codec_params->codec_id == AV_CODEC_ID_MJPEG || codec_params->codec_id == AV_CODEC_ID_JPEG2000) {
+                    song.coverArtMimeType = "image/jpeg";
+                } else if (codec_params->codec_id == AV_CODEC_ID_PNG) {
+                    song.coverArtMimeType = "image/png";
                 }
-                jsoncons::json doc = jsoncons::json::parse(jsonOutput);
-                if (doc.contains("format")) {
-                    const auto &format = doc["format"];
-                    if (format.contains("duration")) {
-                        song.duration = static_cast<int>(std::stod(format["duration"].as_string()));
-                    }
-                    if (format.contains("tags")) {
-                        const auto &tags = format["tags"];
-                        if (tags.contains("Title"))
-                            song.title = tags["Title"].as_string();
-                        if (tags.contains("Artist"))
-                            song.artist = tags["Artist"].as_string();
-                        if (tags.contains("Album"))
-                            song.album = tags["Album"].as_string();
-                        if (tags.contains("Genre"))
-                            song.genre = tags["Genre"].as_string();
-                        if (tags.contains("date")) {
-                            try {
-                                song.year = std::stoi(tags["date"].as_string().substr(0, 4));
-                            } catch (...) {
-                            }
-                        } else if (tags.contains("TYER")) {
-                            try {
-                                song.year = std::stoi(tags["TYER"].as_string());
-                            } catch (...) {
-                            }
-                        }
-                    }
-                }
-            } catch (const std::exception &e) {
-                logger->warn("调用ffprobe或解析其输出时出错: {} 文件: {}", e.what(), filePath.string());
-                return song;
-            }
-            return song;
-        }
-
-        void extractCoverArtWithFFmpeg(Song &song) {
-            std::filesystem::path tempCoverPath =
-                    std::filesystem::temp_directory_path() / (song.filePath.stem().string() + "_cover.jpg");
-            std::string escapedInputPath = escapeSingleQuotes(song.filePath.string());
-            std::string escapedOutputPath = escapeSingleQuotes(tempCoverPath.string());
-            std::string command =
-                    "ffmpeg -y -v error -i " + escapedInputPath + " -an -c:v copy -frames:v 1 " + escapedOutputPath;
-            try {
-                executeCommand(command.c_str());
-                if (std::filesystem::exists(tempCoverPath) && !std::filesystem::is_empty(tempCoverPath)) {
-                    std::ifstream file(tempCoverPath, std::ios::binary);
-                    if (file) {
-                        song.coverArt = std::vector<char>((std::istreambuf_iterator<char>(file)),
-                                                          std::istreambuf_iterator<char>());
-                        song.coverArtMimeType = "image/jpeg";
-                    }
-                    std::filesystem::remove(tempCoverPath);
-                }
-            } catch (const std::exception &e) {
-                logger->error("使用ffmpeg提取封面时发生错误: {}。文件: {}", e.what(), song.filePath.string());
             }
         }
 
     } // namespace
 
     std::optional<Song> createSongFromFile(const std::filesystem::path &filePath) {
-        auto songOpt = getMetadataWithFFprobe(filePath);
-        if (!songOpt) {
+        // 使用智能指针管理 AVFormatContext 的生命周期
+        AVFormatContext *formatCtxRaw = nullptr;
+        // avformat_open_input 会分配内存，需要我们手动释放，RAII包装器会自动处理
+        if (avformat_open_input(&formatCtxRaw, filePath.c_str(), nullptr, nullptr) != 0) {
+            logger->warn("无法打开文件: {}", filePath.string());
             return std::nullopt;
         }
-        Song song = *songOpt;
-        extractCoverArtWithFFmpeg(song);
+        AVFormatContextPtr formatCtx(formatCtxRaw); // 将裸指针交给智能指针管理
+
+        // 查找流信息
+        if (avformat_find_stream_info(formatCtx.get(), nullptr) < 0) {
+            logger->warn("无法找到文件流信息: {}", filePath.string());
+            return std::nullopt; // or return a partially filled song
+        }
+
+        Song song;
+        song.filePath = filePath;
+
+        // 调用新的API函数来填充Song结构体
+        getMetadataWithAPI(song, formatCtx.get());
+        extractCoverArtWithAPI(song, formatCtx.get());
+
+        // formatCtx 会在函数结束时自动被unique_ptr的Deleter关闭和释放
         return song;
     }
 
