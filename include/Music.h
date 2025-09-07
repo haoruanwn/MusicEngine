@@ -20,9 +20,8 @@ namespace MusicEngine {
         // Filesystem path to the music file
         std::filesystem::path filePath;
 
-        // Album cover art (binary data)
-        std::vector<char> coverArt;
-        std::string coverArtMimeType; // e.g., "image/jpeg"
+        // Flag indicating if cover art is available
+        bool hasCoverArt = false; 
     };
 
 } // namespace MusicEngine

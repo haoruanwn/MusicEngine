@@ -5,6 +5,7 @@
 #include <future>
 #include <mutex>
 #include <string>
+#include "CoverArtCache.hpp"
 #include "MusicParser.hpp"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -237,11 +238,11 @@ namespace MusicEngine {
                                 "Year: {}\n"
                                 "Duration: {} seconds\n"
                                 "File Path: {}\n"
-                                "Cover Art Size: {} bytes\n"
+                                "Has Cover Art: {}\n"
                                 "----------------------------",
                                 format_field(music.title), format_field(music.artist), format_field(music.album),
                                 format_field(music.genre), music.year == 0 ? "Unknown" : std::to_string(music.year),
-                                music.duration, music.filePath.string(), music.coverArt.size());
+                                music.duration, music.filePath.string(), (music.hasCoverArt ? "Yes" : "No"));
 
             // Write to the file
             file_logger->info(music_info);
@@ -275,6 +276,10 @@ namespace MusicEngine {
             extensions_str += ext + " ";
         }
         pimpl->m_logger->info("Supported file extensions updated to: {}", extensions_str);
+    }
+
+    std::shared_ptr<const std::vector<char>> MusicManager::getCoverArt(const Music &music) const {
+        return CoverArtCache::getInstance().getCoverArt(music);
     }
 
 } // namespace MusicEngine

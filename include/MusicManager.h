@@ -132,6 +132,18 @@ namespace MusicEngine {
          */
         void setSupportedExtensions(const std::vector<std::string> &extensions);
 
+        /**
+         * @brief Gets the cover art for a specific music object.
+         *
+         * This method is a convenient facade over the CoverArtCache. It will
+         * retrieve the cover art from the cache, or load it from the file if
+         * it's the first time being requested.
+         *
+         * @param music The music object to get the cover art for.
+         * @return A shared_ptr to the cover art data (vector<char>), or nullptr if no cover art exists.
+         */
+        std::shared_ptr<const std::vector<char>> getCoverArt(const Music& music) const;
+
     private:
         struct Impl;
         std::unique_ptr<Impl> pimpl;

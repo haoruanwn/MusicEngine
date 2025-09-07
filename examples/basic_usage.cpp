@@ -15,14 +15,12 @@ void printMusicInfo(const Music &music, auto logger) {
                  "  Artist: {}\n"
                  "  Album: {}\n"
                  "  File Path: \"{}\"\n"
-                 "  Cover Art Size: {} bytes\n"
-                 "  Cover MIME Type: {}\n"
+                 "  Has Cover Art: {}\n"
                  "  Duration: {} seconds\n"
                  "  Year: {}",
                  music.title.empty() ? "Unknown" : music.title, music.artist.empty() ? "Unknown" : music.artist,
-                 music.album.empty() ? "Unknown" : music.album, music.filePath.string(), music.coverArt.size(),
-                 music.coverArtMimeType.empty() ? "Unknown" : music.coverArtMimeType, music.duration,
-                 music.year != 0 ? std::to_string(music.year) : "Unknown");
+                 music.album.empty() ? "Unknown" : music.album, music.filePath.string(), (music.hasCoverArt ? "Yes" : "No"),
+                 music.duration, music.year != 0 ? std::to_string(music.year) : "Unknown");
 }
 
 int main() {

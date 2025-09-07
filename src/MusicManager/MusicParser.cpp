@@ -1,4 +1,4 @@
-#include "MusicParser.hpp" 
+#include "MusicParser.hpp"
 
 #include <cstdio>
 #include <memory>
@@ -77,29 +77,17 @@ namespace MusicParser {
             }
         }
 
-        // 提取封面图片
-        void extractCoverArtWithAPI(Music &music, AVFormatContext *formatCtx) {
+        // 检查封面是否存在
+        void checkCoverArtExists(Music &music, AVFormatContext *formatCtx) {
             int stream_idx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
 
-            if (stream_idx < 0) {
-                logger->info("文件 '{}' 中未找到封面流。", music.filePath.string());
-                return;
-            }
-
-            AVStream *stream = formatCtx->streams[stream_idx];
-
-            // 检查流是否是附加图片 (Attached Picture)
-            if (stream->disposition & AV_DISPOSITION_ATTACHED_PIC && stream->attached_pic.size > 0) {
-                const AVPacket &cover_packet = stream->attached_pic;
-                music.coverArt.assign(cover_packet.data, cover_packet.data + cover_packet.size);
-
-                // 尝试确定MIME类型
-                AVCodecParameters *codec_params = stream->codecpar;
-                if (codec_params->codec_id == AV_CODEC_ID_MJPEG || codec_params->codec_id == AV_CODEC_ID_JPEG2000) {
-                    music.coverArtMimeType = "image/jpeg";
-                } else if (codec_params->codec_id == AV_CODEC_ID_PNG) {
-                    music.coverArtMimeType = "image/png";
+            if (stream_idx >= 0) {
+                AVStream *stream = formatCtx->streams[stream_idx];
+                if (stream->disposition & AV_DISPOSITION_ATTACHED_PIC && stream->attached_pic.size > 0) {
+                    music.hasCoverArt = true;
                 }
+            } else {
+                music.hasCoverArt = false;
             }
         }
 
@@ -126,10 +114,43 @@ namespace MusicParser {
 
         // 调用新的API函数来填充Music结构体
         getMetadataWithAPI(music, formatCtx.get());
-        extractCoverArtWithAPI(music, formatCtx.get());
+        checkCoverArtExists(music, formatCtx.get());
 
         // formatCtx 会在函数结束时自动被unique_ptr的Deleter关闭和释放
         return music;
+    }
+
+    std::optional<std::vector<char>> extractCoverArtData(const std::filesystem::path &filePath) {
+        AVFormatContext *formatCtxRaw = nullptr;
+        if (avformat_open_input(&formatCtxRaw, filePath.c_str(), nullptr, nullptr) != 0) {
+            logger->warn("extractCoverArtData: 无法打开文件: {}", filePath.string());
+            return std::nullopt;
+        }
+        AVFormatContextPtr formatCtx(formatCtxRaw);
+
+        if (avformat_find_stream_info(formatCtx.get(), nullptr) < 0) {
+            logger->warn("extractCoverArtData: 无法找到文件流信息: {}", filePath.string());
+            return std::nullopt;
+        }
+
+        // 专辑封面通常作为附加的视频流存储
+        int stream_idx = av_find_best_stream(formatCtx.get(), AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+        if (stream_idx < 0) {
+            logger->info("extractCoverArtData: 文件中未找到视频流 (封面): {}", filePath.string());
+            return std::nullopt;
+        }
+
+        AVStream *stream = formatCtx->streams[stream_idx];
+
+        // 检查该流是否是“附加图片”并且包含数据
+        if (stream->disposition & AV_DISPOSITION_ATTACHED_PIC && stream->attached_pic.size > 0) {
+            const AVPacket &packet = stream->attached_pic;
+            // 从 packet 中拷贝数据到 vector
+            return std::vector<char>(packet.data, packet.data + packet.size);
+        }
+
+        logger->info("extractCoverArtData: 视频流不是附加封面: {}", filePath.string());
+        return std::nullopt;
     }
 
 } // namespace MusicParser

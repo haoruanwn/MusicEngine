@@ -1,5 +1,6 @@
 add_library(MusicManager STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/MusicManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/CoverArtCache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/MusicParser.cpp
 )
 
