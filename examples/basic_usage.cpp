@@ -1,7 +1,6 @@
 #include <chrono>
 #include <thread>
 #include "SongManager.h"
-#include "opencv_show.hpp"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
@@ -85,13 +84,6 @@ int main() {
         printSongInfo(song, logger);
     }
 
-    // Display the first search result with its cover art
-    if (!searchResults.empty()) {
-        logger->info("Displaying info and cover art for the first search result...");
-        displaySongWithCover(searchResults[0]);
-    } else {
-        logger->info("No songs found matching the search term. Cannot display cover art.");
-    }
 
     // === Demonstrate Export Functionality ===
     std::filesystem::path export_path = "../song_database_export.log";
