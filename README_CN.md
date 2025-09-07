@@ -117,6 +117,10 @@
 
 > **交叉编译提示**: 如果您正在为嵌入式平台进行交叉编译，请在CMake配置阶段通过 `-DCMAKE_TOOLCHAIN_FILE` 参数引入您的工具链文件。
 
+### 开源贡献
+欢迎任何开发者来为 MusicEngine 贡献代码，在进行工作之前，请阅读[贡献指南](./docs/CONTRIBUTING.md)。
+
+
 ### 引用与致谢
 
 `MusicEngine` 的实现离不开以下优秀的开源项目：

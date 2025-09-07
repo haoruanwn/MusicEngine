@@ -4,6 +4,8 @@
 #include <optional>
 #include "Music.h" // 包含Music结构体的定义
 
+using namespace MusicEngine;
+
 namespace MusicParser {
 
     void logger_init();
