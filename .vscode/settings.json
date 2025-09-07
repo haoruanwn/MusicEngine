@@ -1,7 +1,7 @@
 {
     // --- Clangd 智能提示配置 ---
     "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/build/Debug/",
+        "--compile-commands-dir=${workspaceFolder}/build/",
         "--all-scopes-completion",
         "--completion-style=detailed",
         "--header-insertion=never"

@@ -47,6 +47,7 @@ public:
      */
     bool exportDatabaseToFile(const std::filesystem::path& outputPath) const;
 
+
 private:
     struct Impl; 
     std::unique_ptr<Impl> pimpl;
