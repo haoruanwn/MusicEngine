@@ -18,7 +18,6 @@ struct Song {
     std::filesystem::path filePath;
 
     // 专辑封面 (二进制数据)
-    // 使用 vector<std::byte> (C++17) 或 vector<char> 来存储
     std::vector<char> coverArt;
     std::string coverArtMimeType; // 例如: "image/jpeg"
 };
