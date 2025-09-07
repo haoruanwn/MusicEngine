@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(SongManager)
 
 # Select whether to build example programs
-option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" ON)
+option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" OFF)
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
