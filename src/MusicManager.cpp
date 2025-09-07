@@ -1,18 +1,18 @@
-#include "SongManager.h"
+#include "MusicManager.h"
 #include <algorithm>
 #include <atomic>
 #include <format>
 #include <future>
 #include <mutex>
 #include <string>
-#include "SongParser.hpp"
+#include "MusicParser.hpp"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
 // Pimpl struct to hide private members from the public header.
-struct SongManager::Impl {
-    std::vector<Song> m_songDatabase;
+struct MusicManager::Impl {
+    std::vector<Music> m_musicDatabase;
     mutable std::mutex m_dbMutex;
     std::future<void> m_scanFuture;
     std::atomic<bool> m_isScanning{false};
@@ -26,33 +26,33 @@ struct SongManager::Impl {
     Impl() {}
 };
 
-SongManager::SongManager() : pimpl(std::make_unique<Impl>()) {
+MusicManager::MusicManager() : pimpl(std::make_unique<Impl>()) {
     // Initial state is not scanning
     pimpl->m_isScanning = false;
 
-    // Initialize the SongManager logger
-    pimpl->m_logger = spdlog::stdout_color_mt("SongManager");
+    // Initialize the MusicManager logger
+    pimpl->m_logger = spdlog::stdout_color_mt("MusicManager");
     pimpl->m_logger->set_level(spdlog::level::info);
-    pimpl->m_logger->info("SongManager initialized.");
+    pimpl->m_logger->info("MusicManager initialized.");
 
-    // Initialize the SongParser logger
-    SongParser::logger_init();
+    // Initialize the MusicParser logger
+    MusicParser::logger_init();
 }
 
 // Destructor implementation
-SongManager::~SongManager() {
+MusicManager::~MusicManager() {
     // If a background scan is still running when the program exits, wait for it to complete.
     if (pimpl->m_scanFuture.valid()) {
         pimpl->m_scanFuture.wait();
     }
 }
 
-SongManager &SongManager::getInstance() {
-    static SongManager instance;
+MusicManager &MusicManager::getInstance() {
+    static MusicManager instance;
     return instance;
 }
 
-bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
+bool MusicManager::startScan(const std::function<void(size_t)> &onScanFinished) {
     // Check if directory paths have been set
     if (pimpl->m_directoryPaths.empty()) {
         pimpl->m_logger->error("Error: Directory paths have not been set.");
@@ -74,7 +74,7 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
     pimpl->m_scanFuture = std::async(std::launch::async, [this, pathsToScan, onScanFinished]() {
         pimpl->m_logger->info("Background scan started...");
 
-        std::vector<Song> newDatabase;
+        std::vector<Music> newDatabase;
 
         for (const auto &dirPath : pathsToScan) {
             pimpl->m_logger->info("Scanning directory: {}", dirPath.string());
@@ -92,8 +92,8 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
                         for (const auto &supExt : pimpl->supportedExtensions) {
                             if (extension == supExt) {
                                 // Parse the file and add it to the database
-                                if (auto songOpt = SongParser::createSongFromFile(entry.path())) {
-                                    newDatabase.push_back(*songOpt);
+                                if (auto musicOpt = MusicParser::createMusicFromFile(entry.path())) {
+                                    newDatabase.push_back(*musicOpt);
                                 }
                                 break;
                             }
@@ -112,7 +112,7 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
 
         {
             std::lock_guard<std::mutex> lock(pimpl->m_dbMutex);
-            pimpl->m_songDatabase = std::move(newDatabase);
+            pimpl->m_musicDatabase = std::move(newDatabase);
         }
 
         // Invoke the callback function to notify completion
@@ -126,38 +126,38 @@ bool SongManager::startScan(const std::function<void(size_t)> &onScanFinished) {
     return true;
 }
 
-bool SongManager::isScanning() const {
+bool MusicManager::isScanning() const {
     return pimpl->m_isScanning;
 }
 
-std::vector<Song> SongManager::getAllSongs() const {
+std::vector<Music> MusicManager::getAllMusics() const {
     std::lock_guard<std::mutex> lock(pimpl->m_dbMutex);
-    return pimpl->m_songDatabase;
+    return pimpl->m_musicDatabase;
 }
 
-std::vector<Song> SongManager::searchSongs(const std::string &query) const {
+std::vector<Music> MusicManager::searchMusics(const std::string &query) const {
     if (pimpl->m_directoryPaths.empty()) {
         pimpl->m_logger->error("Error: Directory paths have not been set. Cannot perform search.");
         return {};
     }
 
-    std::vector<Song> results;
+    std::vector<Music> results;
     std::string lowerQuery = query;
     std::transform(lowerQuery.begin(), lowerQuery.end(), lowerQuery.begin(), ::tolower);
 
     std::lock_guard<std::mutex> lock(pimpl->m_dbMutex);
-    for (const auto &song : pimpl->m_songDatabase) {
-        std::string lowerTitle = song.title;
+    for (const auto &music : pimpl->m_musicDatabase) {
+        std::string lowerTitle = music.title;
         std::transform(lowerTitle.begin(), lowerTitle.end(), lowerTitle.begin(), ::tolower);
 
         if (lowerTitle.find(lowerQuery) != std::string::npos) {
-            results.push_back(song);
+            results.push_back(music);
         }
     }
     return results;
 }
 
-std::vector<std::string> SongManager::getSongNames() const {
+std::vector<std::string> MusicManager::getMusicNames() const {
     std::vector<std::string> results;
     std::lock_guard<std::mutex> lock(pimpl->m_dbMutex); // Ensure thread safety
 
@@ -165,26 +165,26 @@ std::vector<std::string> SongManager::getSongNames() const {
         pimpl->m_logger->warn("Warning: Directory paths not set, but returning names from current (possibly empty) database.");
     }
     
-    for (const auto &song : pimpl->m_songDatabase) {
-        results.push_back(song.filePath.filename().string());
+    for (const auto &music : pimpl->m_musicDatabase) {
+        results.push_back(music.filePath.filename().string());
     }
 
     return results;
 }
 
-void SongManager::setDirectoryPath(const std::filesystem::path &directoryPath) {
+void MusicManager::setDirectoryPath(const std::filesystem::path &directoryPath) {
     pimpl->m_directoryPaths = {directoryPath};
 }
 
-void SongManager::setDirectoryPath(const std::vector<std::filesystem::path> &directoryPaths) {
+void MusicManager::setDirectoryPath(const std::vector<std::filesystem::path> &directoryPaths) {
     pimpl->m_directoryPaths = directoryPaths;
 }
 
-void SongManager::setDirectoryPath(std::initializer_list<std::filesystem::path> directoryPaths) {
+void MusicManager::setDirectoryPath(std::initializer_list<std::filesystem::path> directoryPaths) {
     pimpl->m_directoryPaths = directoryPaths;
 }
 
-bool SongManager::exportDatabaseToFile(const std::filesystem::path &outputPath) const {
+bool MusicManager::exportDatabaseToFile(const std::filesystem::path &outputPath) const {
     pimpl->m_logger->info("Request to export database to file: {}", outputPath.string());
 
     // Dynamically create a logger specifically for file output
@@ -206,7 +206,7 @@ bool SongManager::exportDatabaseToFile(const std::filesystem::path &outputPath) 
     // Lock the database for thread-safe access
     std::lock_guard<std::mutex> lock(pimpl->m_dbMutex);
 
-    if (pimpl->m_songDatabase.empty()) {
+    if (pimpl->m_musicDatabase.empty()) {
         pimpl->m_logger->warn("Database is empty. Nothing to export.");
         file_logger->info("--- Database is empty ---");
         return true; // The operation itself succeeded
@@ -217,38 +217,38 @@ bool SongManager::exportDatabaseToFile(const std::filesystem::path &outputPath) 
     const std::string formatted_time = std::format("{:%Y-%m-%d %H:%M:%S}", now);
 
     file_logger->info("--- Song Database Export ---");
-    file_logger->info("Total Songs: {}", pimpl->m_songDatabase.size());
+    file_logger->info("Total Musics: {}", pimpl->m_musicDatabase.size());
     file_logger->info("Export Time: {}", formatted_time);
     file_logger->info("----------------------------\n");
 
     // Iterate through the database and format the output
-    for (const auto &song : pimpl->m_songDatabase) {
+    for (const auto &music : pimpl->m_musicDatabase) {
         auto format_field = [](const std::string &value) { return value.empty() ? "Unknown" : value; };
 
         // Format the output string
-        std::string song_info =
-            fmt::format("Title: {}\n"
-                        "Artist: {}\n"
-                        "Album: {}\n"
-                        "Genre: {}\n"
-                        "Year: {}\n"
-                        "Duration: {} seconds\n"
-                        "File Path: {}\n"
-                        "Cover Art Size: {} bytes\n"
+        std::string music_info =
+            fmt::format("Title: {}\n" 
+                        "Artist: {}\n" 
+                        "Album: {}\n" 
+                        "Genre: {}\n" 
+                        "Year: {}\n" 
+                        "Duration: {} seconds\n" 
+                        "File Path: {}\n" 
+                        "Cover Art Size: {} bytes\n" 
                         "----------------------------",
-                        format_field(song.title), format_field(song.artist), format_field(song.album),
-                        format_field(song.genre), song.year == 0 ? "Unknown" : std::to_string(song.year),
-                        song.duration, song.filePath.string(), song.coverArt.size());
+                        format_field(music.title), format_field(music.artist), format_field(music.album),
+                        format_field(music.genre), music.year == 0 ? "Unknown" : std::to_string(music.year),
+                        music.duration, music.filePath.string(), music.coverArt.size());
 
         // Write to the file
-        file_logger->info(song_info);
+        file_logger->info(music_info);
     }
 
     pimpl->m_logger->info("Database successfully exported to: {}", outputPath.string());
     return true;
 }
 
-void SongManager::setSupportedExtensions(const std::vector<std::string> &extensions) {
+void MusicManager::setSupportedExtensions(const std::vector<std::string> &extensions) {
     if (extensions.empty()) {
         pimpl->m_logger->warn("Warning: Attempted to set an empty list of supported extensions. Keeping existing settings.");
         return;
