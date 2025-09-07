@@ -64,6 +64,8 @@ int main() {
     }
     logger->info("[Main Thread] isScanning() returned false. Scan has finished.");
 
+    
+
     // Get all musics from the manager and print them
     logger->info("[Main Thread] Fetching the final music list from MusicManager:");
     auto allMusics = manager.getAllMusics();
@@ -73,6 +75,18 @@ int main() {
         logger->info("Retrieved {} musics in total. Details below:", allMusics.size());
         for (const auto &music : allMusics) {
             printMusicInfo(music, logger);
+        }
+    }
+
+        // --- Test: get the first music`s cover art and print its size ---
+    if (!allMusics.empty()) {
+        const auto &firstMusic = allMusics.front();
+        logger->info("[Test] Fetching cover art for: {}", firstMusic.filePath.string());
+        auto cover = manager.getCoverArt(firstMusic);
+        if (cover) {
+            logger->info("[Test] Cover art size: {} bytes", cover->size());
+        } else {
+            logger->info("[Test] No cover art available for this music.");
         }
     }
 
