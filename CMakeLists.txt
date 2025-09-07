@@ -7,6 +7,9 @@ option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" OFF)
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+# 设置c++标准
+set(CMAKE_CXX_STANDARD 20)
+
 add_subdirectory(third_party/spdlog)
 find_package(PkgConfig REQUIRED)
 

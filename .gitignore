@@ -6,10 +6,7 @@ cmake-build-*/
 # 用于测试音乐的存储目录
 music_test/
 
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
+.vscode/
 
 # conan生成的配置文件
 CMakeUserPresets.json
