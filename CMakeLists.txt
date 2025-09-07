@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 project(SongManager)
 
-# 选择是否构建示例程序
-option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" OFF)
+# Select whether to build example programs
+option(SONGMANAGER_BUILD_EXAMPLES "Build the example programs" ON)
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-# 设置c++标准
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(third_party/spdlog)
@@ -39,13 +39,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 if(SONGMANAGER_BUILD_EXAMPLES)
-    # 如果选项为 ON，则添加 examples 目录作为一个子构建
+    # If the option is ON, add the examples directory as a subdirectory
     add_subdirectory(examples)
     message(STATUS "Building examples...")
 endif()
 
 
-# 根据这个项目是主项目还是子项目，设置不同的安装规则和spdlog库的链接方式
+# According to whether this is the main project or a subproject, set up install rules and linking
 if (${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
     message(STATUS "SongManager is being built as the main project. Install rules enabled.")
 

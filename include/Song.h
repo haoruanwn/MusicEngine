@@ -1,23 +1,24 @@
 #pragma once
 
-#include <cstdint> 
-#include <filesystem> 
+#include <cstdint>
+#include <filesystem>
 #include <string>
 #include <vector>
 
-// 歌曲信息结构体
+// Structure to hold song information
 struct Song {
-    // 基本信息
-    std::string title; // 曲名
-    std::string artist; // 艺术家
-    std::string album; // 专辑
-    std::string genre; // 流派
-    int32_t year = 0; // 年份
-    int32_t duration = 0; // 时长 (秒)
+    // Basic metadata
+    std::string title;    // Song title
+    std::string artist;   // Artist name
+    std::string album;    // Album name
+    std::string genre;    // Genre
+    int32_t year = 0;     // Release year
+    int32_t duration = 0; // Duration in seconds
 
+    // Filesystem path to the song file
     std::filesystem::path filePath;
 
-    // 专辑封面 (二进制数据)
+    // Album cover art (binary data)
     std::vector<char> coverArt;
-    std::string coverArtMimeType; // 例如: "image/jpeg"
+    std::string coverArtMimeType; // e.g., "image/jpeg"
 };
