@@ -5,7 +5,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
-std::vector<std::filesystem::path> music_dirs = {"/home/hao/projects/SongManager/music_test", "/home/hao/音乐"};
+std::vector<std::filesystem::path> music_dirs = {"../music_test", "/home/hao/音乐"};
 
 
 // 用来打印歌曲信息
@@ -41,7 +41,11 @@ int main() {
 
     auto &manager = SongManager::getInstance();
 
+    // 设置要扫描的目录
     manager.setDirectoryPath(music_dirs);
+
+    // 设置支持的音乐文件扩展名（可选）, 默认支持 .mp3, .m4a, .flac, .wav, .ogg
+    manager.setSupportedExtensions({".mp3", ".flac", ".wav", ".m4a", ".ogg", ".aac"});
 
     auto scanCallback = [&logger](size_t count) { logger->info("[回调] 扫描完成, 共找到 {} 首歌曲.", count); };
 
@@ -92,8 +96,8 @@ int main() {
         logger->info("未搜索到相关歌曲，无法显示封面。");
     }
 
-     // === 新增：演示导出功能 ===
-    std::filesystem::path export_path = "/home/hao/projects/SongManager/song_database_export.log";
+     // === 演示导出功能 ===
+    std::filesystem::path export_path = "../song_database_export.log";
     logger->info("[主线程] 正在尝试将数据库导出到 '{}'...", export_path.string());
     if (manager.exportDatabaseToFile(export_path)) {
         logger->info("[主线程] 数据库导出成功！");

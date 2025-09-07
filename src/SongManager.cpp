@@ -21,11 +21,12 @@ struct SongManager::Impl {
     std::shared_ptr<spdlog::logger> m_logger;
 
     // 支持的音乐文件拓展名
-    const std::vector<std::string> supportedExtensions = {".mp3", ".m4a", ".flac"};
+    std::vector<std::string> supportedExtensions = {".mp3", ".m4a", ".flac", ".wav", ".ogg"};
 
     // Impl的构造函数
     Impl() {}
 };
+
 
 SongManager::SongManager() : pimpl(std::make_unique<Impl>()) {
     // 初始状态不是扫描中
@@ -254,5 +255,30 @@ bool SongManager::exportDatabaseToFile(const std::filesystem::path &outputPath) 
 
     pimpl->m_logger->info("数据库成功导出到: {}", outputPath.string());
     return true;
+}
+
+void SongManager::setSupportedExtensions(const std::vector<std::string> &extensions) {
+    if (extensions.empty()) {
+        pimpl->m_logger->warn("警告: 尝试设置空的支持扩展名列表，保持现有设置不变。");
+        return;
+    }
+
+    // 清理并设置新的扩展名列表
+    pimpl->supportedExtensions.clear();
+    for (const auto &ext: extensions) {
+        std::string lowerExt = ext;
+        std::transform(lowerExt.begin(), lowerExt.end(), lowerExt.begin(), ::tolower);
+        if (!lowerExt.empty() && lowerExt[0] != '.') {
+            lowerExt = "." + lowerExt; // 确保扩展名前有点
+        }
+        pimpl->supportedExtensions.push_back(lowerExt);
+    }
+
+    pimpl->m_logger->info("支持的音乐文件扩展名已更新: ");
+
+    // 打印当前支持的扩展名列表
+    for (const auto &ext: pimpl->supportedExtensions) {
+        pimpl->m_logger->info(" - {}", ext);
+    }
 }
 

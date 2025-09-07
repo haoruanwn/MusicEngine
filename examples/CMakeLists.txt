@@ -4,7 +4,6 @@ project(SongManagerExamples)
 message(STATUS "Building examples for SongManager...")
 
 find_package(OpenCV REQUIRED)
-find_package(spdlog REQUIRED)
 
 # 添加一个可执行文件目标
 add_executable(${PROJECT_NAME}

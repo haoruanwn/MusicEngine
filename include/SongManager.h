@@ -13,7 +13,7 @@ public:
     static SongManager &getInstance();
     SongManager(const SongManager &) = delete;
     SongManager &operator=(const SongManager &) = delete;
-    
+
     /**
      * @brief 异步扫描音乐目录.
      * 如果当前已有扫描任务正在进行，则此函数会立即返回false.
@@ -46,6 +46,10 @@ public:
      * @return 如果导出成功，返回 true；如果因文件权限等问题失败，则返回 false。
      */
     bool exportDatabaseToFile(const std::filesystem::path& outputPath) const;
+
+    
+    // 设置支持的音乐文件拓展名
+    void setSupportedExtensions(const std::vector<std::string>& extensions);
 
 
 private:
