@@ -6,38 +6,38 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "Song.h"
+#include "Music.h"
 
 /**
- * @class SongManager
+ * @class MusicManager
  * @brief A singleton class for managing a music library.
  *
- * SongManager is responsible for scanning music files from specified directories,
+ * MusicManager is responsible for scanning music files from specified directories,
  * parsing their metadata, and storing it in an internal database.
- * It provides features like asynchronous scanning, searching, retrieving song info, and exporting the database.
+ * It provides features like asynchronous scanning, searching, retrieving music info, and exporting the database.
  * This class uses the Pimpl (Pointer to implementation) idiom to hide implementation details.
  */
-class SongManager {
+class MusicManager {
 public:
     /**
-     * @brief Gets the global unique instance of SongManager.
-     * @return A reference to the static instance of SongManager.
+     * @brief Gets the global unique instance of MusicManager.
+     * @return A reference to the static instance of MusicManager.
      */
-    static SongManager &getInstance();
+    static MusicManager &getInstance();
 
     // Delete copy constructor and copy assignment operator to ensure singleton uniqueness.
-    SongManager(const SongManager &) = delete;
-    SongManager &operator=(const SongManager &) = delete;
+    MusicManager(const MusicManager &) = delete;
+    MusicManager &operator=(const MusicManager &) = delete;
 
     /**
-     * @brief Asynchronously scans the specified music directories to build the song database.
+     * @brief Asynchronously scans the specified music directories to build the music database.
      *
      * This function starts a background thread to perform the scan, so it does not block the calling thread.
      * If a previous scan is still in progress, this function will return false immediately.
      * At least one valid directory path must be set via setDirectoryPath() before calling this function.
      *
      * @param onScanFinished (Optional) A callback function that will be invoked when the scan is complete.
-     * The callback receives a size_t argument representing the total number of songs found.
+     * The callback receives a size_t argument representing the total number of music found.
      * Defaults to nullptr, meaning no callback will be executed.
      * @return bool Returns true if the scan task was successfully started;
      * returns false if a scan is already in progress or if no directories have been set.
@@ -51,31 +51,31 @@ public:
     bool isScanning() const;
 
     /**
-     * @brief Retrieves all songs currently in the database.
+     * @brief Retrieves all music currently in the database.
      *
-     * This function is thread-safe. It returns a copy of all song objects in the database.
+     * This function is thread-safe. It returns a copy of all music objects in the database.
      * Be aware that this may have a performance cost if the database is very large.
      *
-     * @return std::vector<Song> A vector containing information for all songs. Returns an empty vector if the database is empty.
+     * @return std::vector<Music> A vector containing information for all music. Returns an empty vector if the database is empty.
      */
-    std::vector<Song> getAllSongs() const;
+    std::vector<Music> getAllMusics() const;
 
     /**
-     * @brief Searches for songs based on a query string.
+     * @brief Searches for music based on a query string.
      *
-     * The search is case-insensitive and matches any song whose title contains the query string.
+     * The search is case-insensitive and matches any music whose title contains the query string.
      * This function is thread-safe.
      *
      * @param query The string to search for.
-     * @return std::vector<Song> A vector of songs that match the query. Returns an empty vector if no matches are found.
+     * @return std::vector<Music> A vector of music that match the query. Returns an empty vector if no matches are found.
      */
-    std::vector<Song> searchSongs(const std::string &query) const;
+    std::vector<Music> searchMusics(const std::string &query) const;
 
     /**
-     * @brief Gets a list of all song filenames in the database.
-     * @return std::vector<std::string> A vector of strings, where each string is a song's filename.
+     * @brief Gets a list of all music filenames in the database.
+     * @return std::vector<std::string> A vector of strings, where each string is a music's filename.
      */
-    std::vector<std::string> getSongNames() const;
+    std::vector<std::string> getMusicNames() const;
 
     /**
      * @brief Sets a single music library directory path.
@@ -106,9 +106,9 @@ public:
     void setDirectoryPath(std::initializer_list<std::filesystem::path> directoryPaths);
 
     /**
-     * @brief Exports all song information from the current database to a text file.
+     * @brief Exports all music information from the current database to a text file.
      *
-     * This function formats the details of each song (title, artist, album, etc.) and writes them to the specified file.
+     * This function formats the details of each music (title, artist, album, etc.) and writes them to the specified file.
      * If the file already exists, its content will be overwritten. This operation is thread-safe.
      *
      * @param outputPath The full path of the target file to write to.
@@ -132,6 +132,6 @@ private:
     std::unique_ptr<Impl> pimpl;
 
     // Constructor and destructor are private to enforce the singleton pattern.
-    SongManager();
-    ~SongManager();
+    MusicManager();
+    ~MusicManager();
 };

@@ -1,7 +1,7 @@
 # examples/CMakeLists.txt
-project(SongManagerExamples)
+project(MusicManagerExamples)
 
-message(STATUS "Building examples for SongManager...")
+message(STATUS "Building examples for MusicManager...")
 
 add_executable(${PROJECT_NAME}
         basic_usage.cpp
@@ -12,6 +12,6 @@ target_link_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        SongManager
+        MusicManager
         spdlog::spdlog
 )

@@ -1,14 +1,14 @@
 #include <chrono>
 #include <thread>
-#include "SongManager.h"
+#include "MusicManager.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
-std::vector<std::filesystem::path> music_dirs = {"../music_test", "/home/hao/Music"}; // Adjusted path for convention
+std::vector<std::filesystem::path> music_dirs = {"../music_test", "/home/hao/音乐"}; // Adjusted path for convention
 
-// Helper function to print song information
-void printSongInfo(const Song &song, auto logger) {
-    logger->info("===== Song Information =====\n"
+// Helper function to print music information
+void printMusicInfo(const Music &music, auto logger) {
+    logger->info("===== Music Information =====\n"
                  "  Title: {}\n"
                  "  Artist: {}\n"
                  "  Album: {}\n"
@@ -17,10 +17,10 @@ void printSongInfo(const Song &song, auto logger) {
                  "  Cover MIME Type: {}\n"
                  "  Duration: {} seconds\n"
                  "  Year: {}",
-                 song.title.empty() ? "Unknown" : song.title, song.artist.empty() ? "Unknown" : song.artist,
-                 song.album.empty() ? "Unknown" : song.album, song.filePath.string(), song.coverArt.size(),
-                 song.coverArtMimeType.empty() ? "Unknown" : song.coverArtMimeType, song.duration,
-                 song.year != 0 ? std::to_string(song.year) : "Unknown");
+                 music.title.empty() ? "Unknown" : music.title, music.artist.empty() ? "Unknown" : music.artist,
+                 music.album.empty() ? "Unknown" : music.album, music.filePath.string(), music.coverArt.size(),
+                 music.coverArtMimeType.empty() ? "Unknown" : music.coverArtMimeType, music.duration,
+                 music.year != 0 ? std::to_string(music.year) : "Unknown");
 }
 
 int main() {
@@ -34,7 +34,7 @@ int main() {
 
     logger->info("--- Music Player System Starting ---");
 
-    auto &manager = SongManager::getInstance();
+    auto &manager = MusicManager::getInstance();
 
     // Set the directories to scan
     manager.setDirectoryPath(music_dirs);
@@ -43,10 +43,10 @@ int main() {
     manager.setSupportedExtensions({".mp3", ".flac", ".wav", ".m4a", ".ogg", ".aac"});
 
     // Define a callback for when the scan finishes
-    auto scanCallback = [&logger](size_t count) { logger->info("[Callback] Scan finished. Found {} songs.", count); };
+    auto scanCallback = [&logger](size_t count) { logger->info("[Callback] Scan finished. Found {} musics.", count); };
 
     // Start the first scan
-    logger->info("[Main Thread] Requesting SongManager to start the first scan...");
+    logger->info("[Main Thread] Requesting MusicManager to start the first scan...");
     if (manager.startScan(scanCallback)) {
         logger->info("[Main Thread] Scan task started successfully.");
     }
@@ -64,29 +64,29 @@ int main() {
     }
     logger->info("[Main Thread] isScanning() returned false. Scan has finished.");
 
-    // Get all songs from the manager and print them
-    logger->info("[Main Thread] Fetching the final song list from SongManager:");
-    auto allSongs = manager.getAllSongs();
-    if (allSongs.empty()) {
+    // Get all musics from the manager and print them
+    logger->info("[Main Thread] Fetching the final music list from MusicManager:");
+    auto allMusics = manager.getAllMusics();
+    if (allMusics.empty()) {
         logger->info("The database is empty. The target directories might contain no supported music files.");
     } else {
-        logger->info("Retrieved {} songs in total. Details below:", allSongs.size());
-        for (const auto &song : allSongs) {
-            printSongInfo(song, logger);
+        logger->info("Retrieved {} musics in total. Details below:", allMusics.size());
+        for (const auto &music : allMusics) {
+            printMusicInfo(music, logger);
         }
     }
 
     // --- Demonstrate Search Functionality ---
     std::string searchTerm = "Genshin"; // Example search term
-    logger->info("Demonstrating search: looking for songs with '{}' in the title:", searchTerm);
-    auto searchResults = manager.searchSongs(searchTerm);
-    for (const auto &song : searchResults) {
-        printSongInfo(song, logger);
+    logger->info("Demonstrating search: looking for musics with '{}' in the title:", searchTerm);
+    auto searchResults = manager.searchMusics(searchTerm);
+    for (const auto &music : searchResults) {
+        printMusicInfo(music, logger);
     }
 
 
     // === Demonstrate Export Functionality ===
-    std::filesystem::path export_path = "../song_database_export.log";
+    std::filesystem::path export_path = "../music_database_export.log";
     logger->info("[Main Thread] Attempting to export the database to '{}'...", export_path.string());
     if (manager.exportDatabaseToFile(export_path)) {
         logger->info("[Main Thread] Database export successful!");
@@ -94,11 +94,11 @@ int main() {
         logger->error("[Main Thread] Database export failed.");
     }
     
-    // Print all fetched song filenames
-    auto songNames = manager.getSongNames();
-    logger->info("All scanned song filenames:");
-    for (const auto &songName : songNames) {
-        logger->info("  - {}", songName);
+    // Print all fetched music filenames
+    auto musicNames = manager.getMusicNames();
+    logger->info("All scanned music filenames:");
+    for (const auto &musicName : musicNames) {
+        logger->info("  - {}", musicName);
     }
 
 
