@@ -119,6 +119,11 @@ With this method, the `spdlog` library will be linked upwards as a public depend
 
 > **Cross-compilation Tip**: If you are cross-compiling for an embedded platform, please specify your toolchain file during the CMake configuration step using the `-DCMAKE_TOOLCHAIN_FILE` parameter.
 
+
+### Open Source Contributions
+
+We welcome all developers to contribute to MusicEngine. Before starting any work, please read the [Contribution Guidelines](./docs/CONTRIBUTING.md).
+
 ### References and Acknowledgements
 
 The implementation of `MusicEngine` would not be possible without these excellent open-source projects:
