@@ -15,14 +15,12 @@ void printMusicInfo(const Music &music, auto logger) {
                  "  Artist: {}\n"
                  "  Album: {}\n"
                  "  File Path: \"{}\"\n"
-                 "  Cover Art Size: {} bytes\n"
-                 "  Cover MIME Type: {}\n"
+                 "  Has Cover Art: {}\n"
                  "  Duration: {} seconds\n"
                  "  Year: {}",
                  music.title.empty() ? "Unknown" : music.title, music.artist.empty() ? "Unknown" : music.artist,
-                 music.album.empty() ? "Unknown" : music.album, music.filePath.string(), music.coverArt.size(),
-                 music.coverArtMimeType.empty() ? "Unknown" : music.coverArtMimeType, music.duration,
-                 music.year != 0 ? std::to_string(music.year) : "Unknown");
+                 music.album.empty() ? "Unknown" : music.album, music.filePath.string(), (music.hasCoverArt ? "Yes" : "No"),
+                 music.duration, music.year != 0 ? std::to_string(music.year) : "Unknown");
 }
 
 int main() {
@@ -66,6 +64,8 @@ int main() {
     }
     logger->info("[Main Thread] isScanning() returned false. Scan has finished.");
 
+    
+
     // Get all musics from the manager and print them
     logger->info("[Main Thread] Fetching the final music list from MusicManager:");
     auto allMusics = manager.getAllMusics();
@@ -75,6 +75,18 @@ int main() {
         logger->info("Retrieved {} musics in total. Details below:", allMusics.size());
         for (const auto &music : allMusics) {
             printMusicInfo(music, logger);
+        }
+    }
+
+        // --- Test: get the first music`s cover art and print its size ---
+    if (!allMusics.empty()) {
+        const auto &firstMusic = allMusics.front();
+        logger->info("[Test] Fetching cover art for: {}", firstMusic.filePath.string());
+        auto cover = manager.getCoverArt(firstMusic);
+        if (cover) {
+            logger->info("[Test] Cover art size: {} bytes", cover->size());
+        } else {
+            logger->info("[Test] No cover art available for this music.");
         }
     }
 
