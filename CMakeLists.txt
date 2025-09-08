@@ -6,11 +6,6 @@ option(MUSICMANAGER_BUILD_EXAMPLES "Build the example programs" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_CXX_STANDARD 20)
 
-# Configure Third-Party Dependencies
-set(MINIAUDIO_BUILD_EXAMPLES OFF CACHE BOOL "Disable miniaudio examples" FORCE)
-set(MINIAUDIO_BUILD_TESTS OFF CACHE BOOL "Disable miniaudio tests" FORCE)
-set(MINIAUDIO_NO_DECODING ON CACHE BOOL "Disable all decoders" FORCE) 
-
 
 # Find dependencies
 set(SPDLOG_INSTALL ON)
@@ -21,6 +16,11 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libavcodec
     libavutil
 )
+
+# Configure Third-Party Dependencies
+set(MINIAUDIO_BUILD_EXAMPLES OFF CACHE BOOL "Disable miniaudio examples" FORCE)
+set(MINIAUDIO_BUILD_TESTS OFF CACHE BOOL "Disable miniaudio tests" FORCE)
+set(MINIAUDIO_NO_DECODING ON CACHE BOOL "Disable all decoders" FORCE) 
 
 # Include subdirectories
 # This will execute src/CMakeLists.txt and define the MusicManager target

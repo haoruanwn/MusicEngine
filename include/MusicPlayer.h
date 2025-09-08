@@ -4,7 +4,7 @@
 
 namespace MusicEngine {
 
-    enum class PlaybackState { Stopped, Playing, Paused };
+    enum class PlayerState { Stopped, Playing, Paused };
 
     class MusicPlayer {
     public:
@@ -24,7 +24,7 @@ namespace MusicEngine {
         void seek(double seconds);
 
         // 获取当前播放状态 (例如: Playing, Paused, Stopped)
-        PlaybackState getState() const;
+        PlayerState getState() const;
 
         // 获取当前播放进度 (单位：秒)
         double getCurrentPosition() const;
