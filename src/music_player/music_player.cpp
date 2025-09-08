@@ -66,6 +66,8 @@ namespace MusicEngine {
         std::atomic<int64_t> total_samples_played_{0};
         std::atomic<double> seek_request_secs_{-1.0}; // -1.0 means no seek request
 
+        std::function<void()> on_playback_finished_callback_;
+
         Impl() {
             logger_ = spdlog::stdout_color_mt("MusicPlayer");
             logger_->set_level(spdlog::level::info);
@@ -362,6 +364,14 @@ namespace MusicEngine {
                 // End of file
                 stop_requested_ = true;
                 logger_->info("Finished decoding file");
+
+                // 添加音乐播放完成的回调
+                state_ = PlayerState::Stopped;
+                // 调用回调通知上层应用
+                if (on_playback_finished_callback_) {
+                    logger_->info("Invoking on_playback_finished callback.");
+                    on_playback_finished_callback_();
+                }
                 break;
             }
         }
@@ -486,6 +496,11 @@ namespace MusicEngine {
         seek(target_secs);
 
         return clamped_percentage; // 返回钳位后的百分比
+    }
+
+    // 实现 set 函数
+    void MusicPlayer::set_on_playback_finished_callback(const std::function<void()> &callback) {
+        pimpl_->on_playback_finished_callback_ = callback;
     }
 
 } // namespace MusicEngine

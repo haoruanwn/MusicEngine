@@ -3,6 +3,7 @@
 #include <memory>
 #include <optional>
 #include "Music.h"
+#include <functional>
 
 namespace MusicEngine {
 
@@ -46,6 +47,12 @@ namespace MusicEngine {
 
         // Seek to a specific position using a percentage (0-100)
         std::optional<int> seek_percent(int percentage);
+
+        /**
+         * @brief Sets a callback function to be invoked when playback of a track finishes.
+         * @param callback The function to call. It will be invoked from a background thread.
+         */
+        void set_on_playback_finished_callback(const std::function<void()>& callback);
 
     private:
         struct Impl;
