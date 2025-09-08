@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include "Music.h"
 
 namespace MusicEngine {
@@ -37,8 +38,14 @@ namespace MusicEngine {
         // Get the current playback position in seconds
         double get_current_position() const;
 
+        // Get the current playback position as a percentage (0-100)
+        int get_current_position_percent() const;
+
         // Seek to a specific position in the music
-        void seek(double position_secs);
+        std::optional<double> seek(double position_secs);
+
+        // Seek to a specific position using a percentage (0-100)
+        std::optional<int> seek_percent(int percentage);
 
     private:
         struct Impl;

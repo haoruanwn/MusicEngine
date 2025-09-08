@@ -1,5 +1,5 @@
 # examples/CMakeLists.txt
-project(music_player_test)
+project(music_player_seek_test)
 
 message(STATUS "Building the MusicPlayer examples")
 

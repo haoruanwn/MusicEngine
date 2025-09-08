@@ -436,18 +436,56 @@ namespace MusicEngine {
         return 0.0;
     }
 
-    void MusicPlayer::seek(double position_secs) {
-        if (pimpl_->state_ == PlayerState::Stopped || position_secs < 0 ||
-            position_secs > pimpl_->total_duration_secs_) {
-            pimpl_->logger_->warn("Seek request ignored: invalid state or position ({})", position_secs);
-            return;
+    std::optional<double> MusicPlayer::seek(double position_secs) {
+        if (pimpl_->state_ == PlayerState::Stopped) {
+            pimpl_->logger_->warn("Seek request ignored: player is stopped.");
+            return std::nullopt; // 请求被忽略
         }
+
+        // 注意：这里我们放宽了对 position_secs 的检查，因为 seek_percent 依赖它
+        // 具体的钳位应该由业务逻辑决定，或者在这里也加上
+        if (position_secs < 0)
+            position_secs = 0.0;
+        if (position_secs > pimpl_->total_duration_secs_)
+            position_secs = pimpl_->total_duration_secs_;
+
 
         pimpl_->logger_->info("Requesting seek to {} seconds", position_secs);
         pimpl_->seek_request_secs_ = position_secs;
-        // 唤醒可能因队列已满或暂停而等待的解码线程
+
+        // 唤醒解码线程
         pimpl_->control_cond_var_.notify_one();
         pimpl_->queue_cond_var_.notify_one();
+
+        return position_secs; // 返回实际请求的秒数
+    }
+
+    int MusicPlayer::get_current_position_percent() const {
+        if (pimpl_->total_duration_secs_ <= 0) {
+            return 0;
+        }
+        double current_position = get_current_position();
+        double percentage = (current_position / pimpl_->total_duration_secs_) * 100.0;
+        return static_cast<int>(std::round(percentage)); // 四舍五入取整
+    }
+
+    std::optional<int> MusicPlayer::seek_percent(int percentage) {
+        if (pimpl_->state_ == PlayerState::Stopped) {
+            pimpl_->logger_->warn("Seek percentage request ignored: player is stopped.");
+            return std::nullopt; // 请求被忽略
+        }
+
+        int clamped_percentage = std::max(0, std::min(100, percentage));
+        if (clamped_percentage != percentage) {
+            pimpl_->logger_->warn("Seek percentage {} is out of range. Clamped to {}.", percentage, clamped_percentage);
+        }
+
+        double target_secs = pimpl_->total_duration_secs_ * (static_cast<double>(clamped_percentage) / 100.0);
+
+        // 复用已有的 seek(double) 函数
+        seek(target_secs);
+
+        return clamped_percentage; // 返回钳位后的百分比
     }
 
 } // namespace MusicEngine
