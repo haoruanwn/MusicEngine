@@ -5,7 +5,7 @@
 #include <vector>
 #include "Music.h"
 
-namespace music_engine {
+namespace MusicEngine {
 
     class CoverArtCache {
     public:

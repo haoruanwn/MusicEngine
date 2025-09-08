@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include "music_parser.hpp"
 
-namespace music_engine {
+namespace MusicEngine {
 
     struct CoverArtCache::Impl {
         // Memory cache: Key is the file path, Value is a shared pointer to the cover data
@@ -48,4 +48,4 @@ namespace music_engine {
         return nullptr; // Extraction failed
     }
 
-} // namespace music_engine
+} // namespace MusicEngine

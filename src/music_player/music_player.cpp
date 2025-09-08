@@ -23,7 +23,7 @@ extern "C" {
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
-namespace music_engine {
+namespace MusicEngine {
 
     // Define the AudioFrame struct
     struct AudioFrame {
@@ -73,7 +73,7 @@ namespace music_engine {
 
         static void audio_callback_wrapper(ma_device *p_device, void *p_output, const void *p_input,
                                            ma_uint32 frame_count) {
-            MusicPlayer::Impl *p_impl = static_cast<MusicPlayer::Impl *>(p_device->pUserData);
+            Impl *p_impl = static_cast<Impl *>(p_device->pUserData);
             if (p_impl) {
                 p_impl->process_playback_frames(p_output, frame_count);
             }
@@ -84,7 +84,7 @@ namespace music_engine {
 
     MusicPlayer::~MusicPlayer() { stop(); }
 
-    void MusicPlayer::play(const music_engine::Music &music) {
+    void MusicPlayer::play(const MusicEngine::Music &music) {
         stop(); // Before playing a new music, stop and clean up the old one
 
         pimpl_->stop_requested_ = false;
@@ -340,4 +340,4 @@ namespace music_engine {
         }
     }
 
-} // namespace music_engine
+} // namespace MusicEngine

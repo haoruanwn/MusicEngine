@@ -12,7 +12,7 @@
 #include "spdlog/spdlog.h"
 
 
-namespace music_engine {
+namespace MusicEngine {
     // Pimpl struct to hide private members from the public header.
     struct MusicManager::Impl {
         std::vector<Music> music_database_;
@@ -282,4 +282,4 @@ namespace music_engine {
         return CoverArtCache::get_instance().get_cover_art(music);
     }
 
-} // namespace music_engine
+} // namespace MusicEngine

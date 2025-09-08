@@ -3,7 +3,7 @@
 #include <memory>
 #include "Music.h"
 
-namespace music_engine {
+namespace MusicEngine {
 
     enum class PlayerState {
         Stopped,
@@ -21,7 +21,7 @@ namespace music_engine {
         MusicPlayer& operator=(const MusicPlayer&) = delete;
 
         // Play a new music
-        void play(const music_engine::Music& music);
+        void play(const MusicEngine::Music& music);
 
         // Stop the current playback
         void stop();
@@ -40,4 +40,4 @@ namespace music_engine {
         std::unique_ptr<Impl> pimpl_;
     };
 
-} // namespace music_engine
+} // namespace MusicEngine

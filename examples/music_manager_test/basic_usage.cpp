@@ -4,7 +4,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
-using namespace music_engine;
+using namespace MusicEngine;
 
 std::vector<std::filesystem::path> music_dirs = {"../music_test", "/home/hao/音乐"}; // Adjusted path for convention
 

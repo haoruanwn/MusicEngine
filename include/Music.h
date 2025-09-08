@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace music_engine {
+namespace MusicEngine {
 
     // Structure to hold music information
     struct Music {
@@ -24,4 +24,4 @@ namespace music_engine {
         bool has_cover_art = false; 
     };
 
-} // namespace music_engine
+} // namespace MusicEngine
