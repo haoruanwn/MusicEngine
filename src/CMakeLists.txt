@@ -1,7 +1,9 @@
 add_library(MusicManager STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/miniaudio_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/MusicManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/CoverArtCache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/MusicParser.cpp
+
 )
 
 target_include_directories(MusicManager
@@ -11,6 +13,7 @@ target_include_directories(MusicManager
     PRIVATE
         MusicManager/
         MusicPlayer/
+        ${CMAKE_SOURCE_DIR}/third_party/miniaudio
 
 )
 
