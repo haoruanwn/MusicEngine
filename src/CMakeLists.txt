@@ -3,6 +3,7 @@ add_library(MusicEngine STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/MusicManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/CoverArtCache.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/MusicParser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MusicPlayer/MusicPlayer.cpp
 
 )
 
