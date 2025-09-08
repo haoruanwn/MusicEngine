@@ -23,7 +23,7 @@ namespace music_engine {
         std::shared_ptr<spdlog::logger> logger_;
 
         // Supported music file extensions
-        std::vector<std::string> supported_extensions_ = { ".mp3", ".m4a", ".flac", ".wav", ".ogg" };
+        std::vector<std::string> supported_extensions_ = { ".mp3", ".m4a", ".flac", ".wav"};
 
         // Constructor for the Impl struct
         Impl() {}

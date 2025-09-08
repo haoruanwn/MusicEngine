@@ -34,7 +34,7 @@ if (${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
     target_link_libraries(MusicEngine PRIVATE spdlog::spdlog)
 
     # Build examples only when building as the main project
-    add_subdirectory(examples/MusicManager_test)
+    add_subdirectory(examples/music_manager_test)
     add_subdirectory(examples/miniaudio_test)
     message(STATUS "Building examples...")
 else()
