@@ -5,11 +5,7 @@
 
 namespace MusicEngine {
 
-    enum class PlayerState {
-        Stopped,
-        Playing,
-        Paused
-    };
+    enum class PlayerState { Stopped, Playing, Paused };
 
     class MusicPlayer {
     public:
@@ -17,11 +13,11 @@ namespace MusicEngine {
         ~MusicPlayer();
 
         // Disable copy and assignment
-        MusicPlayer(const MusicPlayer&) = delete;
-        MusicPlayer& operator=(const MusicPlayer&) = delete;
+        MusicPlayer(const MusicPlayer &) = delete;
+        MusicPlayer &operator=(const MusicPlayer &) = delete;
 
         // Play a new music
-        void play(const MusicEngine::Music& music);
+        void play(const MusicEngine::Music &music);
 
         // Stop the current playback
         void stop();
@@ -34,6 +30,12 @@ namespace MusicEngine {
 
         // Get the current playback state
         PlayerState get_state() const;
+
+        // Get the duration of the current music in seconds
+        double get_duration() const;
+
+        // Get the current playback position in seconds
+        double get_current_position() const;
 
     private:
         struct Impl;

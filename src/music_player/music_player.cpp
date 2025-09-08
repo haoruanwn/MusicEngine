@@ -61,6 +61,10 @@ namespace MusicEngine {
         // --- Logging ---
         std::shared_ptr<spdlog::logger> logger_;
 
+        // --- Playback Progress ---
+        double total_duration_secs_{0.0};
+        std::atomic<int64_t> total_samples_played_{0};
+
         Impl() {
             logger_ = spdlog::stdout_color_mt("MusicPlayer");
             logger_->set_level(spdlog::level::info);
@@ -88,7 +92,9 @@ namespace MusicEngine {
         stop(); // Before playing a new music, stop and clean up the old one
 
         pimpl_->stop_requested_ = false;
-        pimpl_->state_ = PlayerState::Playing;
+
+        // 重置样本计数器
+        pimpl_->total_samples_played_ = 0;
 
         // 1. --- FFmpeg Initialization ---
         pimpl_->format_ctx_ = avformat_alloc_context();
@@ -101,6 +107,9 @@ namespace MusicEngine {
             pimpl_->cleanup();
             return;
         }
+
+        // 计算并存储总时长
+        pimpl_->total_duration_secs_ = static_cast<double>(pimpl_->format_ctx_->duration) / AV_TIME_BASE;
 
         // Find the best audio stream
         AVCodecParameters *codec_par = nullptr;
@@ -163,6 +172,9 @@ namespace MusicEngine {
             pimpl_->cleanup();
             return;
         }
+
+        // 所有初始化都成功了再设置播放状态
+        pimpl_->state_ = PlayerState::Playing;
 
         // 4. --- Start the Decoder Thread ---
         pimpl_->decoder_thread_ = std::thread(&Impl::decoder_loop, pimpl_.get());
@@ -238,6 +250,9 @@ namespace MusicEngine {
         avformat_close_input(&format_ctx_);
         swr_free(&swr_ctx_);
         audio_stream_index_ = -1;
+
+        // 重置时长
+        total_duration_secs_ = 0.0;
     }
 
 
@@ -360,6 +375,24 @@ namespace MusicEngine {
             ma_uint32 frames_to_silence = frame_count - total_frames_written;
             memset(p_output_u8 + (total_frames_written * bytes_per_frame), 0, frames_to_silence * bytes_per_frame);
         }
+
+        // 累加实际写入的帧数到总播放样本数
+        total_samples_played_ += total_frames_written;
+
+
+        // If there wasn`t enough data, fill the rest with silence
+        if (total_frames_written < frame_count) {
+            // 静音填充
+        }
+    }
+
+    double MusicPlayer::get_duration() const { return pimpl_->total_duration_secs_; }
+
+    double MusicPlayer::get_current_position() const {
+        if (pimpl_->audio_device_.sampleRate > 0) {
+            return (double) pimpl_->total_samples_played_ / pimpl_->audio_device_.sampleRate;
+        }
+        return 0.0;
     }
 
 } // namespace MusicEngine
