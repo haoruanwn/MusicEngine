@@ -13,7 +13,7 @@ extern "C" {
 #include <libavutil/log.h>
 }
 
-namespace music_parser {
+namespace MusicParser {
 
     std::shared_ptr<spdlog::logger> logger;
 
@@ -153,4 +153,4 @@ namespace music_parser {
         return std::nullopt;
     }
 
-} // namespace music_parser
+} // namespace MusicParser

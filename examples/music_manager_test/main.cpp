@@ -29,7 +29,7 @@ int main() {
     spdlog::set_level(spdlog::level::trace);
 
     // Create a logger for this example
-    auto logger = spdlog::stdout_color_mt("example");
+    auto logger = spdlog::stdout_color_mt("ManagerTest");
     logger->set_level(spdlog::level::info);
 
     logger->info("--- Music Player System Starting ---");

@@ -4,7 +4,7 @@
 #include <optional>
 #include "Music.h" // Include the definition of the Music struct
 
-namespace music_parser {
+namespace MusicParser {
 
     void logger_init();
 
@@ -24,4 +24,4 @@ namespace music_parser {
 
 
 
-} // namespace music_parser
+} // namespace MusicParser

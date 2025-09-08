@@ -38,7 +38,7 @@ namespace MusicEngine {
         }
 
         // 2. Cache miss, load from file
-        if (auto data_opt = music_parser::extract_cover_art_data(music.file_path)) {
+        if (auto data_opt = MusicParser::extract_cover_art_data(music.file_path)) {
             auto shared_ptr = std::make_shared<const std::vector<char>>(std::move(*data_opt));
             // Store in cache
             pimpl_->memory_cache_[key] = shared_ptr;

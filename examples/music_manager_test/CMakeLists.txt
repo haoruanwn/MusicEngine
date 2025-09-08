@@ -1,10 +1,10 @@
 # examples/CMakeLists.txt
-project(MusicManagerExamples)
+project(music_manager_test)
 
 message(STATUS "Building the MusicManager examples")
 
 add_executable(${PROJECT_NAME}
-        basic_usage.cpp
+        main.cpp
 )
 
 target_link_directories(${PROJECT_NAME} PRIVATE
