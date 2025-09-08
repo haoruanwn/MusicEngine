@@ -119,8 +119,8 @@ int main() {
     logger->info("[Action] Calling play()...");
     player.play(music_to_play);
     print_player_state(player, logger);
-    logger->info("Playing for 5 seconds...");
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    logger->info("Playing for 10 seconds...");
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
     // 测试 Pause
     logger->info("[Action] Calling pause()...");
@@ -133,8 +133,8 @@ int main() {
     logger->info("[Action] Calling resume()...");
     player.resume();
     print_player_state(player, logger);
-    logger->info("Resuming playback for 5 seconds...");
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    logger->info("Resuming playback for 10 seconds...");
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
     // 测试 Stop
     logger->info("[Action] Calling stop()...");
