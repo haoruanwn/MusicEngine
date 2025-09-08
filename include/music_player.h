@@ -3,7 +3,7 @@
 #include <memory>
 #include "Music.h"
 
-namespace MusicEngine {
+namespace music_engine {
 
     enum class PlayerState {
         Stopped,
@@ -16,28 +16,28 @@ namespace MusicEngine {
         MusicPlayer();
         ~MusicPlayer();
 
-        // 禁止拷贝和赋值
+        // Disable copy and assignment
         MusicPlayer(const MusicPlayer&) = delete;
         MusicPlayer& operator=(const MusicPlayer&) = delete;
 
-        // 播放一首新歌
-        void play(const Music& music);
+        // Play a new music
+        void play(const music_engine::Music& music);
 
-        // 停止当前播放
+        // Stop the current playback
         void stop();
 
-        // 暂停当前播放
+        // Pause the current playback
         void pause();
 
-        // 从暂停处继续播放
+        // Resume playback from the paused position
         void resume();
 
-        // 获取当前播放状态
-        PlayerState getState() const;
+        // Get the current playback state
+        PlayerState get_state() const;
 
     private:
         struct Impl;
-        std::unique_ptr<Impl> pimpl;
+        std::unique_ptr<Impl> pimpl_;
     };
 
-} // namespace MusicEngine
+} // namespace music_engine

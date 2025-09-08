@@ -1,9 +1,9 @@
 add_library(MusicEngine STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/miniaudio_impl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/MusicManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/CoverArtCache.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/MusicParser.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/MusicPlayer/MusicPlayer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/music_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/cover_art_cache.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MusicManager/music_parser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/MusicPlayer/music_player.cpp
 
 )
 

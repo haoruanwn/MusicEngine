@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace MusicEngine {
+namespace music_engine {
 
     // Structure to hold music information
     struct Music {
@@ -18,10 +18,10 @@ namespace MusicEngine {
         int32_t duration = 0; // Duration in seconds
 
         // Filesystem path to the music file
-        std::filesystem::path filePath;
+        std::filesystem::path file_path;
 
         // Flag indicating if cover art is available
-        bool hasCoverArt = false; 
+        bool has_cover_art = false; 
     };
 
-} // namespace MusicEngine
+} // namespace music_engine
