@@ -37,6 +37,9 @@ namespace MusicEngine {
         // Get the current playback position in seconds
         double get_current_position() const;
 
+        // Seek to a specific position in the music
+        void seek(double position_secs);
+
     private:
         struct Impl;
         std::unique_ptr<Impl> pimpl_;

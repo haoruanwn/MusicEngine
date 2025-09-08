@@ -64,6 +64,7 @@ namespace MusicEngine {
         // --- Playback Progress ---
         double total_duration_secs_{0.0};
         std::atomic<int64_t> total_samples_played_{0};
+        std::atomic<double> seek_request_secs_{-1.0}; // -1.0 means no seek request
 
         Impl() {
             logger_ = spdlog::stdout_color_mt("MusicPlayer");
@@ -264,10 +265,43 @@ namespace MusicEngine {
         AVFrame *frame = av_frame_alloc();
 
         while (!stop_requested_) {
+            // 检查并处理 seek 请求
+            double seek_pos = seek_request_secs_.exchange(-1.0);
+            if (seek_pos >= 0.0) {
+                logger_->info("Seek command received, processing...");
+                // 计算FFmpeg时间戳
+                int64_t target_timestamp =
+                        av_rescale_q(static_cast<int64_t>(seek_pos * AV_TIME_BASE), {1, AV_TIME_BASE},
+                                     format_ctx_->streams[audio_stream_index_]->time_base);
+
+                // 执行 seek
+                if (av_seek_frame(format_ctx_, audio_stream_index_, target_timestamp, AVSEEK_FLAG_BACKWARD) < 0) {
+                    logger_->error("Failed to seek to position {}", seek_pos);
+                } else {
+                    // 清空解码器缓冲区
+                    avcodec_flush_buffers(codec_ctx_);
+
+                    // 清空我们的队列
+                    {
+                        std::lock_guard<std::mutex> lock(queue_mutex_);
+                        std::queue<std::shared_ptr<AudioFrame>> empty_queue;
+                        frame_queue_.swap(empty_queue);
+                    }
+
+                    // 更新播放样本计数器
+                    total_samples_played_ = static_cast<int64_t>(seek_pos * device_config_.sampleRate);
+
+                    logger_->info("Seek completed. Resuming decoding.");
+                }
+            }
+
+
             // Handle pause
             {
                 std::unique_lock<std::mutex> lock(control_mutex_);
-                control_cond_var_.wait(lock, [this] { return state_ != PlayerState::Paused || stop_requested_; });
+                control_cond_var_.wait(lock, [this] {
+                    return state_ != PlayerState::Paused || stop_requested_ || seek_request_secs_ >= 0.0;
+                });
             }
             if (stop_requested_)
                 break;
@@ -275,11 +309,18 @@ namespace MusicEngine {
             // Queue back-pressure control
             {
                 std::unique_lock<std::mutex> lock(queue_mutex_);
-                queue_cond_var_.wait(lock, [this] { return frame_queue_.size() < MAX_QUEUE_SIZE || stop_requested_; });
+                queue_cond_var_.wait(lock, [this] {
+                    return frame_queue_.size() < MAX_QUEUE_SIZE || stop_requested_ || seek_request_secs_ >= 0.0;
+                });
             }
             if (stop_requested_)
                 break;
 
+            // 如果有新的 seek 请求，回到循环顶部处理
+            if (seek_request_secs_ >= 0.0)
+                continue;
+
+            // Read and decode frames
             if (av_read_frame(format_ctx_, packet) >= 0) {
                 if (packet->stream_index == audio_stream_index_) {
                     if (avcodec_send_packet(codec_ctx_, packet) == 0) {
@@ -393,6 +434,20 @@ namespace MusicEngine {
             return (double) pimpl_->total_samples_played_ / pimpl_->audio_device_.sampleRate;
         }
         return 0.0;
+    }
+
+    void MusicPlayer::seek(double position_secs) {
+        if (pimpl_->state_ == PlayerState::Stopped || position_secs < 0 ||
+            position_secs > pimpl_->total_duration_secs_) {
+            pimpl_->logger_->warn("Seek request ignored: invalid state or position ({})", position_secs);
+            return;
+        }
+
+        pimpl_->logger_->info("Requesting seek to {} seconds", position_secs);
+        pimpl_->seek_request_secs_ = position_secs;
+        // 唤醒可能因队列已满或暂停而等待的解码线程
+        pimpl_->control_cond_var_.notify_one();
+        pimpl_->queue_cond_var_.notify_one();
     }
 
 } // namespace MusicEngine
