@@ -23,7 +23,7 @@ extern "C" {
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
-namespace music_engine {
+namespace MusicEngine {
 
     // Define the AudioFrame struct
     struct AudioFrame {
@@ -73,7 +73,7 @@ namespace music_engine {
 
         static void audio_callback_wrapper(ma_device *p_device, void *p_output, const void *p_input,
                                            ma_uint32 frame_count) {
-            MusicPlayer::Impl *p_impl = static_cast<MusicPlayer::Impl *>(p_device->pUserData);
+            Impl *p_impl = static_cast<Impl *>(p_device->pUserData);
             if (p_impl) {
                 p_impl->process_playback_frames(p_output, frame_count);
             }
@@ -84,7 +84,7 @@ namespace music_engine {
 
     MusicPlayer::~MusicPlayer() { stop(); }
 
-    void MusicPlayer::play(const music_engine::Music &music) {
+    void MusicPlayer::play(const MusicEngine::Music &music) {
         stop(); // Before playing a new music, stop and clean up the old one
 
         pimpl_->stop_requested_ = false;
@@ -196,18 +196,39 @@ namespace music_engine {
     }
 
     void MusicPlayer::pause() {
-        if (pimpl_->state_ == PlayerState::Playing) {
-            pimpl_->state_ = PlayerState::Paused;
-            pimpl_->logger_->info("Playback paused");
+        // 检查状态
+        if (pimpl_->state_ != PlayerState::Playing) {
+            return;
         }
+
+        pimpl_->state_ = PlayerState::Paused;
+
+        // 显式停止 miniaudio 设备，这将停止调用我们的回调函数
+        if (ma_device_stop(&pimpl_->audio_device_) != MA_SUCCESS) {
+            pimpl_->logger_->warn("Failed to stop audio device on pause.");
+        }
+
+        pimpl_->logger_->info("Playback paused");
     }
 
     void MusicPlayer::resume() {
-        if (pimpl_->state_ == PlayerState::Paused) {
-            pimpl_->state_ = PlayerState::Playing;
-            pimpl_->control_cond_var_.notify_one(); // Wake up the decoder thread
-            pimpl_->logger_->info("Playback resumed");
+        // 检查状态必须放在前面
+        if (pimpl_->state_ != PlayerState::Paused) {
+            return;
         }
+
+        pimpl_->state_ = PlayerState::Playing;
+
+        // 显式启动 miniaudio 设备，这将恢复调用我们的回调函数
+        if (ma_device_start(&pimpl_->audio_device_) != MA_SUCCESS) {
+            pimpl_->logger_->error("Failed to start audio device on resume. Playback may not continue.");
+            // 如果设备启动失败，最好还是停下来
+            stop();
+            return;
+        }
+
+        pimpl_->control_cond_var_.notify_one(); // 唤醒解码线程继续生产数据
+        pimpl_->logger_->info("Playback resumed");
     }
 
     PlayerState MusicPlayer::get_state() const { return pimpl_->state_; }
@@ -306,7 +327,7 @@ namespace music_engine {
 
             // Wait for data in the queue, with a short timeout to prevent deadlocks if the decoder stalls
             if (queue_cond_var_.wait_for(lock, std::chrono::milliseconds(10),
-                                        [this] { return !frame_queue_.empty() || stop_requested_; })) {
+                                         [this] { return !frame_queue_.empty() || stop_requested_; })) {
                 if (stop_requested_) {
                     break;
                 }
@@ -325,6 +346,7 @@ namespace music_engine {
 
                 if (audio_frame->consumed_bytes >= audio_frame->data.size()) {
                     frame_queue_.pop();
+                    queue_cond_var_.notify_one();
                 }
 
             } else {
@@ -340,4 +362,4 @@ namespace music_engine {
         }
     }
 
-} // namespace music_engine
+} // namespace MusicEngine

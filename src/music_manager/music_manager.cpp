@@ -12,7 +12,7 @@
 #include "spdlog/spdlog.h"
 
 
-namespace music_engine {
+namespace MusicEngine {
     // Pimpl struct to hide private members from the public header.
     struct MusicManager::Impl {
         std::vector<Music> music_database_;
@@ -39,7 +39,7 @@ namespace music_engine {
         pimpl_->logger_->info("MusicManager initialized.");
 
         // Initialize the MusicParser logger
-        music_parser::logger_init();
+        MusicParser::logger_init();
     }
 
     // Destructor implementation
@@ -95,7 +95,7 @@ namespace music_engine {
                             for (const auto &sup_ext: pimpl_->supported_extensions_) {
                                 if (extension == sup_ext) {
                                     // Parse the file and add it to the database
-                                    if (auto music_opt = music_parser::create_music_from_file(entry.path())) {
+                                    if (auto music_opt = MusicParser::create_music_from_file(entry.path())) {
                                         new_database.push_back(*music_opt);
                                     }
                                     break;
@@ -282,4 +282,4 @@ namespace music_engine {
         return CoverArtCache::get_instance().get_cover_art(music);
     }
 
-} // namespace music_engine
+} // namespace MusicEngine

@@ -13,7 +13,7 @@ extern "C" {
 #include <libavutil/log.h>
 }
 
-namespace music_parser {
+namespace MusicParser {
 
     std::shared_ptr<spdlog::logger> logger;
 
@@ -49,7 +49,7 @@ namespace music_parser {
     namespace {
 
         // Use FFmpeg API to get metadata
-        void get_metadata_with_api(music_engine::Music &music, AVFormatContext *format_ctx) {
+        void get_metadata_with_api(MusicEngine::Music &music, AVFormatContext *format_ctx) {
             // 1. Get duration
             if (format_ctx->duration != AV_NOPTS_VALUE) {
                 music.duration = static_cast<int>(format_ctx->duration / AV_TIME_BASE);
@@ -78,7 +78,7 @@ namespace music_parser {
         }
 
         // Check if cover art exists
-        void check_cover_art_exists(music_engine::Music &music, AVFormatContext *format_ctx) {
+        void check_cover_art_exists(MusicEngine::Music &music, AVFormatContext *format_ctx) {
             int stream_index = av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
 
             if (stream_index >= 0) {
@@ -93,7 +93,7 @@ namespace music_parser {
 
     } // namespace
 
-    std::optional<music_engine::Music> create_music_from_file(const std::filesystem::path &file_path) {
+    std::optional<MusicEngine::Music> create_music_from_file(const std::filesystem::path &file_path) {
         // Use a smart pointer to manage the lifecycle of AVFormatContext
         AVFormatContext *format_ctx_raw = nullptr;
         // avformat_open_input allocates memory that we need to free manually; the RAII wrapper handles this automatically
@@ -109,7 +109,7 @@ namespace music_parser {
             return std::nullopt; // or return a partially filled music
         }
 
-        music_engine::Music music;
+        MusicEngine::Music music;
         music.file_path = file_path;
 
         // Call the new API functions to populate the Music struct
@@ -153,4 +153,4 @@ namespace music_parser {
         return std::nullopt;
     }
 
-} // namespace music_parser
+} // namespace MusicParser

@@ -8,7 +8,7 @@
 #include <vector>
 #include "Music.h"
 
-namespace music_engine {
+namespace MusicEngine {
     
     /**
      * @class MusicManager
@@ -153,4 +153,4 @@ namespace music_engine {
         ~MusicManager();
     };
 
-} // namespace music_engine
+} // namespace MusicEngine

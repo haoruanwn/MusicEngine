@@ -14,6 +14,7 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libavformat
     libavcodec
     libavutil
+    libswresample
 )
 
 # Configure Third-Party Dependencies
@@ -36,6 +37,7 @@ if (${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
     # Build examples only when building as the main project
     add_subdirectory(examples/music_manager_test)
     add_subdirectory(examples/miniaudio_test)
+    add_subdirectory(examples/music_player_test)
     message(STATUS "Building examples...")
 else()
     # Scene 2: Included as a submodule
