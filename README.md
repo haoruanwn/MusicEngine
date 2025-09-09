@@ -1,38 +1,50 @@
+
+
 # MusicEngine
 
 ### A Modern C++ Music Backend Designed for Embedded Linux Platforms
 
 English | [中文](./README_CN.md)
 
-### Introduction
+`MusicEngine` is a modern C++ music backend specifically designed for embedded Linux platforms. Based on the C++20 standard, it encapsulates the multimedia processing capabilities of `FFmpeg` into a concise and efficient C++ interface, aiming to provide a stable and reliable music processing core for embedded devices, with or without a screen.
 
-`MusicEngine` is a high-performance music backend solution specifically designed for embedded Linux platforms. Written in modern C++20, it aims to encapsulate the powerful and complex multimedia capabilities of `FFmpeg` into a clean, efficient, and easy-to-integrate C++ interface.
+### ✨ Core Features
 
-Whether you are building an embedded device with a screen (like a smart speaker or an in-car entertainment system) or a headless audio application, `MusicEngine` is committed to being your stable and reliable music processing core.
+`MusicEngine` provides a complete music backend solution through two core singleton classes: `MusicManager` and `MusicPlayer`.
 
-### ✨ Feature Roadmap
+#### 🎶 Music Library Management (`MusicManager`)
 
-`MusicEngine` is under active development. Below is the current feature status and future plans.
+`MusicManager` is responsible for the efficient and intelligent management of local music files.
 
-#### ✅ Implemented Features
+| Feature | Detailed Description |
+|---|---|
+| **Non-blocking Music Scanning** | - **Asynchronous Processing**: File scanning is performed in a separate background thread, without blocking the main thread. - **Status Query**: The scanning status can be checked at any time using `is_scanning()`. - **Completion Callback**: Supports registering an `on_scan_finished` callback to automatically notify the upper layer upon completion of the scan. |
+| **Comprehensive Metadata Parsing** | Utilizes `FFmpeg` to parse various audio formats, extracting core metadata such as **title, artist, album, year, genre, and duration**. |
+| **Intelligent Album Art Management** | - **Lazy Loading**: The initial scan only checks for the existence of album art to speed up the scanning process. - **On-demand Extraction & Caching**: Album art data is extracted and automatically cached only upon the first request. - **Automatic Memory Reclamation**: Uses `std::weak_ptr` to manage the cache, automatically releasing memory when the album art is no longer in use. |
+| **Flexible Querying & Configuration** | - **Fuzzy Search**: Provides a `search_musics` interface that supports case-insensitive title matching. - **Custom File Types**: Allows setting the file extensions to be scanned via `set_supported_extensions`. - **Data Export**: Supports exporting the music library metadata to a file using `export_database_to_file`. |
+
+#### 🎧 High-Performance Audio Player (`MusicPlayer`)
+
+`MusicPlayer` focuses on providing stable, smooth, and precisely controllable audio playback.
+
+| Feature | Detailed Description |
+|---|---|
+| **Basic Playback Control** | Provides a complete set of `play`, `pause`, `resume`, and `stop` interfaces. |
+| **Precise Playback Control & Status Retrieval** | - **Seek**: Supports seeking by a **specific number of seconds** or by **playback progress percentage**. - **Real-time Progress Reporting**: Can retrieve the current playback progress (in seconds and percentage) in real-time. |
+| **Robust Multi-threaded Architecture** | Adopts the classic **producer-consumer model**, decoding audio in a separate background thread and feeding data to the audio device through a buffer queue. |
+| **Event Notification Mechanism** | Supports setting a callback via `set_on_playback_finished_callback` to actively notify the application layer when a song finishes playing naturally. |
+
+### ⚙️ System-level Features
 
 | Feature | Description |
-| :--- | :--- |
-| **Asynchronous File Scanning** | Asynchronously and non-blockingly scans specified directories to efficiently index a vast number of music files. |
-| **Core Metadata Parsing** | **[Based on FFmpeg]** Supports parsing metadata (title, artist, album, year, duration, etc.) from various mainstream audio formats. |
-| **Album Art Extraction** | **[Based on FFmpeg]** Capable of extracting embedded album art image data from audio files for UI display. |
-| **High-Performance Logging** | Integrates `spdlog` to provide an efficient logging system that can be enabled or disabled at compile time, facilitating debugging on resource-constrained devices. |
-
-#### 🛠️ Planned Features
-
-| Feature | Description |
-| :--- | :--- |
-| **Core Player Engine** | **[Based on FFmpeg]** Implement complete playback control logic, including play, pause, resume, stop, and precise seeking. |
-| **Playlist Management** | Provide functionality to create, edit, save, and load playlists. |
+|---|---|
+| **High-Performance Logging System** | Deeply integrated with `spdlog` for high-performance asynchronous logging. Supports **completely removing** log code in Release builds via a compile switch for zero performance overhead. |
+| **Modern C++20 Design** | The entire codebase is written using the C++20 standard, extensively using features like smart pointers, the Pimpl idiom, and RAII to ensure memory safety and high maintainability. |
+| **Born for Embedded Platforms** | Focuses on balancing performance and resource consumption. Relies on cross-platform standard libraries like `FFmpeg` for good portability. |
 
 ### 🚀 Build and Installation
 
-#### Prerequisites
+#### Dependencies
 
 `MusicEngine` dynamically links to FFmpeg's LGPL components. Please ensure that the FFmpeg development packages are installed in your development or target environment before compiling.
 
@@ -48,9 +60,9 @@ Whether you are building an embedded device with a screen (like a smart speaker 
     sudo dnf install ffmpeg-devel
     ```
 
-#### Method 1: Integrate as a Git Submodule
+#### Method 1: Integrate via Git Submodule
 
-With this method, the `spdlog` library will be linked upwards as a public dependency, allowing you to call it directly in your own project.
+With this method, the `spdlog` library is linked upwards as a public dependency and can be called directly in your own project.
 
 1.  **Add the submodule**:
 
@@ -60,7 +72,7 @@ With this method, the `spdlog` library will be linked upwards as a public depend
     ```
 
 2.  **Modify your CMakeLists.txt**:
-    Add the subdirectory and link the library in your main project's `CMakeLists.txt`.
+    In your main project's `CMakeLists.txt`, add the subdirectory and link the library.
 
     ```cmake
     cmake_minimum_required(VERSION 3.16)
@@ -73,11 +85,11 @@ With this method, the `spdlog` library will be linked upwards as a public depend
     
     add_executable(${PROJECT_NAME} main.cpp)
     
-    # Link the MusicEngine library
+    # Link against the MusicEngine library
     target_link_libraries(${PROJECT_NAME} PRIVATE MusicEngine)
     ```
 
-#### Method 2: Standalone Compilation and Installation
+#### Method 2: Compile and Install Independently
 
 1.  **Clone the repository**:
 
@@ -86,10 +98,10 @@ With this method, the `spdlog` library will be linked upwards as a public depend
     cd MusicEngine
     ```
 
-2.  **Configure and build**:
+2.  **Configure and Build**:
 
     ```bash
-    # Configure the project, specifying installation to the ~/local/musicengine_install directory
+    # Configure the project and specify the installation directory to ~/local/musicengine_install
     cmake --preset Release -DCMAKE_INSTALL_PREFIX=~/local/musicengine_install
 
     # Build the project
@@ -107,7 +119,7 @@ With this method, the `spdlog` library will be linked upwards as a public depend
     
     set(CMAKE_CXX_STANDARD 20)
     
-    # Specify the installation path of MusicEngine
+    # Specify the installation path for MusicEngine
     set(MusicEngine_DIR ~/local/musicengine_install/lib/cmake/MusicEngine)
     
     find_package(MusicEngine REQUIRED)
@@ -117,19 +129,18 @@ With this method, the `spdlog` library will be linked upwards as a public depend
     target_link_libraries(${PROJECT_NAME} PRIVATE MusicEngine::MusicEngine)
     ```
 
-> **Cross-compilation Tip**: If you are cross-compiling for an embedded platform, please specify your toolchain file during the CMake configuration step using the `-DCMAKE_TOOLCHAIN_FILE` parameter.
+> **Cross-compilation Tip**: If you are cross-compiling for an embedded platform, please use the `-DCMAKE_TOOLCHAIN_FILE` parameter during the CMake configuration step to include your toolchain file.
 
+### Contributing
 
-### Open Source Contributions
+All developers are welcome to contribute to MusicEngine. Before you start, please read the [contribution guide](https://www.google.com/search?q=./docs/CONTRIBUTING.md).
 
-We welcome all developers to contribute to MusicEngine. Before starting any work, please read the [Contribution Guidelines](./docs/CONTRIBUTING.md).
+### Credits and Acknowledgements
 
-### References and Acknowledgements
-
-The implementation of `MusicEngine` would not be possible without these excellent open-source projects:
+The implementation of `MusicEngine` would not be possible without the following excellent open-source projects:
 
   * **FFmpeg**: [https://github.com/FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg)
   * **spdlog**: [https://github.com/gabime/spdlog](https://github.com/gabime/spdlog)
+  * **miniaudio**: [https://github.com/mackron/miniaudio](https://github.com/mackron/miniaudio)
 
-FFmpeg is a leading multimedia framework. `MusicEngine` dynamically links its components, which are licensed under the **GNU Lesser General Public License (LGPL) version 3**.
-
+FFmpeg is a leading multimedia framework. `MusicEngine` dynamically links its components, which are used under the **GNU Lesser General Public License (LGPL) version 3**.

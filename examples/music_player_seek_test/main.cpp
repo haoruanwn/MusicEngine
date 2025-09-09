@@ -31,13 +31,14 @@ void monitor_progress(const MusicEngine::MusicPlayer &player, const Logger &logg
     }
     for (int i = 0; i < duration_secs; ++i) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        if (player.get_state() != MusicEngine::PlayerState::Playing) break;
+        if (player.get_state() != MusicEngine::PlayerState::Playing)
+            break;
         double current_pos = player.get_current_position();
         double total_duration = player.get_duration();
         int percent = player.get_current_position_percent();
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(1) << "  Progress: " << current_pos << "s / " << total_duration
-           << "s (" << percent << "%)";
+        ss << std::fixed << std::setprecision(1) << "  Progress: " << current_pos << "s / " << total_duration << "s ("
+           << percent << "%)";
         logger->info(ss.str());
     }
 }
@@ -54,7 +55,8 @@ int main() {
     const std::filesystem::path music_directory = "/home/hao/音乐"; // <--- 请修改为你的音乐文件夹路径
     manager.set_directory_paths({music_directory});
     manager.start_scan();
-    while (manager.is_scanning()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while (manager.is_scanning())
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     auto all_musics = manager.get_all_musics();
     if (all_musics.empty()) {
         logger->error("No music files found. Test cannot continue.");
@@ -62,6 +64,8 @@ int main() {
     }
     logger->info("Scan finished. Found {} music file(s).", all_musics.size());
 
+
+    // --- 选择第一首音乐进行测试 ---
     const auto &music_to_play = all_musics[0];
     log_music_info(music_to_play, logger);
 
@@ -90,38 +94,40 @@ int main() {
         // --- [Test 4] 边界情况 ---
         logger->info("\n--- [Test 4] Edge Cases ---");
         logger->info("[Action] Testing clamping with seek_percent(150)...");
-        if(auto clamped = player.seek_percent(150)) logger->info("[Result] Clamped to {}%", *clamped);
+        if (auto clamped = player.seek_percent(150))
+            logger->info("[Result] Clamped to {}%", *clamped);
         std::this_thread::sleep_for(std::chrono::seconds(2));
 
         logger->info("[Action] Testing seek on a stopped player...");
         player.stop(); // stop() 被调用，player 实例的生命周期即将结束
-        if(!player.seek_percent(30)) logger->info("[Result] PASSED: Seek correctly ignored.");
+        if (!player.seek_percent(30))
+            logger->info("[Result] PASSED: Seek correctly ignored.");
     } // --- 第一个 player 实例在这里被销毁 ---
 
-    
+
     // --- [Test 5] 回调测试 ---
     logger->info("\n--- [Test 5] Playback Finished Callback ---");
-    
+
     // 为这个独立的测试创建一个全新的、干净的 player 实例
     MusicEngine::MusicPlayer player_for_callback_test;
-    
+
     std::promise<void> finished_promise;
     auto finished_future = finished_promise.get_future();
     player_for_callback_test.set_on_playback_finished_callback([&]() {
         logger->info("[Callback] Playback finished callback triggered!");
         finished_promise.set_value();
     });
-    
+
     logger->info("[Action] Playing and seeking to 3 seconds before end...");
     player_for_callback_test.play(music_to_play);
-    if(player_for_callback_test.get_duration() > 4.0) {
+    if (player_for_callback_test.get_duration() > 4.0) {
         player_for_callback_test.seek(player_for_callback_test.get_duration() - 3.0);
     }
 
     logger->info("[Main Thread] Waiting for callback...");
     finished_future.wait();
     logger->info("[Result] PASSED: Callback successfully notified main thread.");
-    
+
     logger->info("\n--- All tests finished successfully! ---");
     return 0;
 }
