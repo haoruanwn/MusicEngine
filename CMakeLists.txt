@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 project(MusicManager)
 
 # Global settings and options
-option(MUSICMANAGER_BUILD_EXAMPLES "Build the example programs" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_CXX_STANDARD 20)
+
 
 # Find dependencies
 set(SPDLOG_INSTALL ON)
@@ -14,7 +14,13 @@ pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libavformat
     libavcodec
     libavutil
+    libswresample
 )
+
+# Configure Third-Party Dependencies
+set(MINIAUDIO_BUILD_EXAMPLES OFF CACHE BOOL "Disable miniaudio examples" FORCE)
+set(MINIAUDIO_BUILD_TESTS OFF CACHE BOOL "Disable miniaudio tests" FORCE)
+set(MINIAUDIO_NO_DECODING ON CACHE BOOL "Disable all decoders" FORCE) 
 
 # Include subdirectories
 # This will execute src/CMakeLists.txt and define the MusicManager target
@@ -26,24 +32,27 @@ if (${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
     # We link spdlog here and mark it as PRIVATE
     # because for the final executable (like examples), it's an implementation detail
     message(STATUS "MusicManager is main project. Linking spdlog as PRIVATE.")
-    target_link_libraries(MusicManager PRIVATE spdlog::spdlog)
+    target_link_libraries(MusicEngine PRIVATE spdlog::spdlog)
+
+    # Build examples only when building as the main project
+    add_subdirectory(examples/music_manager_test)
+    add_subdirectory(examples/miniaudio_test)
+    add_subdirectory(examples/music_player_basic_test)
+    add_subdirectory(examples/music_player_seek_test)
+    message(STATUS "Building examples...")
 else()
     # Scene 2: Included as a submodule
     # We mark spdlog as PUBLIC.
     # This means any parent target that links against MusicManager will automatically inherit the spdlog dependency.
     # This is the key to "passing it up"!
     message(STATUS "MusicManager is subproject. Linking spdlog as PUBLIC.")
-    target_link_libraries(MusicManager PUBLIC spdlog::spdlog)
+    target_link_libraries(MusicEngine PUBLIC spdlog::spdlog)
 endif()
 
-if(MUSICMANAGER_BUILD_EXAMPLES)
-    add_subdirectory(examples)
-    message(STATUS "Building examples...")
-endif()
 
 # Installation rules remain at the top level, as this is a project-level decision
 if (${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
-    message(STATUS "MusicManager is being built as the main project. Install rules enabled.")
+    message(STATUS "MusicEngine is being built as the main project. Install rules enabled.")
 
     include(GNUInstallDirs)
     
@@ -51,31 +60,31 @@ if (${PROJECT_NAME} STREQUAL ${CMAKE_PROJECT_NAME})
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
-    install(TARGETS MusicManager
-        EXPORT MusicManagerTargets
+    install(TARGETS MusicEngine
+        EXPORT MusicEngineTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 
-    install(EXPORT MusicManagerTargets
-        FILE MusicManagerTargets.cmake
-        NAMESPACE MusicManager::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MusicManager
+    install(EXPORT MusicEngineTargets
+        FILE MusicEngineTargets.cmake
+        NAMESPACE MusicEngine::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MusicEngine
     )
 
     include(CMakePackageConfigHelpers)
     configure_package_config_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/MusicManagerConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/MusicManagerConfig.cmake
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MusicManager
+        ${CMAKE_CURRENT_SOURCE_DIR}/MusicEngineConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/MusicEngineConfig.cmake
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MusicEngine
         PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
     )
 
     install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/MusicManagerConfig.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MusicManager
+        ${CMAKE_CURRENT_BINARY_DIR}/MusicEngineConfig.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MusicEngine
     )
 else()
-    message(STATUS "MusicManager is being built as a subproject. Install rules disabled.")
+    message(STATUS "MusicEngine is being built as a subproject. Install rules disabled.")
 endif()

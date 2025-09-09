@@ -18,11 +18,10 @@ namespace MusicEngine {
         int32_t duration = 0; // Duration in seconds
 
         // Filesystem path to the music file
-        std::filesystem::path filePath;
+        std::filesystem::path file_path;
 
-        // Album cover art (binary data)
-        std::vector<char> coverArt;
-        std::string coverArtMimeType; // e.g., "image/jpeg"
+        // Flag indicating if cover art is available
+        bool has_cover_art = false; 
     };
 
 } // namespace MusicEngine
