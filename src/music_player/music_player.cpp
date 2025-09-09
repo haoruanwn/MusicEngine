@@ -61,6 +61,13 @@ namespace MusicEngine {
         // --- Logging ---
         std::shared_ptr<spdlog::logger> logger_;
 
+        // --- Playback Progress ---
+        double total_duration_secs_{0.0};
+        std::atomic<int64_t> total_samples_played_{0};
+        std::atomic<double> seek_request_secs_{-1.0}; // -1.0 means no seek request
+
+        std::function<void()> on_playback_finished_callback_;
+
         Impl() {
             logger_ = spdlog::stdout_color_mt("MusicPlayer");
             logger_->set_level(spdlog::level::info);
@@ -88,7 +95,9 @@ namespace MusicEngine {
         stop(); // Before playing a new music, stop and clean up the old one
 
         pimpl_->stop_requested_ = false;
-        pimpl_->state_ = PlayerState::Playing;
+
+        // 重置样本计数器
+        pimpl_->total_samples_played_ = 0;
 
         // 1. --- FFmpeg Initialization ---
         pimpl_->format_ctx_ = avformat_alloc_context();
@@ -101,6 +110,9 @@ namespace MusicEngine {
             pimpl_->cleanup();
             return;
         }
+
+        // 计算并存储总时长
+        pimpl_->total_duration_secs_ = static_cast<double>(pimpl_->format_ctx_->duration) / AV_TIME_BASE;
 
         // Find the best audio stream
         AVCodecParameters *codec_par = nullptr;
@@ -163,6 +175,9 @@ namespace MusicEngine {
             pimpl_->cleanup();
             return;
         }
+
+        // 所有初始化都成功了再设置播放状态
+        pimpl_->state_ = PlayerState::Playing;
 
         // 4. --- Start the Decoder Thread ---
         pimpl_->decoder_thread_ = std::thread(&Impl::decoder_loop, pimpl_.get());
@@ -238,6 +253,9 @@ namespace MusicEngine {
         avformat_close_input(&format_ctx_);
         swr_free(&swr_ctx_);
         audio_stream_index_ = -1;
+
+        // 重置时长
+        total_duration_secs_ = 0.0;
     }
 
 
@@ -249,10 +267,43 @@ namespace MusicEngine {
         AVFrame *frame = av_frame_alloc();
 
         while (!stop_requested_) {
+            // 检查并处理 seek 请求
+            double seek_pos = seek_request_secs_.exchange(-1.0);
+            if (seek_pos >= 0.0) {
+                logger_->info("Seek command received, processing...");
+                // 计算FFmpeg时间戳
+                int64_t target_timestamp =
+                        av_rescale_q(static_cast<int64_t>(seek_pos * AV_TIME_BASE), {1, AV_TIME_BASE},
+                                     format_ctx_->streams[audio_stream_index_]->time_base);
+
+                // 执行 seek
+                if (av_seek_frame(format_ctx_, audio_stream_index_, target_timestamp, AVSEEK_FLAG_BACKWARD) < 0) {
+                    logger_->error("Failed to seek to position {}", seek_pos);
+                } else {
+                    // 清空解码器缓冲区
+                    avcodec_flush_buffers(codec_ctx_);
+
+                    // 清空我们的队列
+                    {
+                        std::lock_guard<std::mutex> lock(queue_mutex_);
+                        std::queue<std::shared_ptr<AudioFrame>> empty_queue;
+                        frame_queue_.swap(empty_queue);
+                    }
+
+                    // 更新播放样本计数器
+                    total_samples_played_ = static_cast<int64_t>(seek_pos * device_config_.sampleRate);
+
+                    logger_->info("Seek completed. Resuming decoding.");
+                }
+            }
+
+
             // Handle pause
             {
                 std::unique_lock<std::mutex> lock(control_mutex_);
-                control_cond_var_.wait(lock, [this] { return state_ != PlayerState::Paused || stop_requested_; });
+                control_cond_var_.wait(lock, [this] {
+                    return state_ != PlayerState::Paused || stop_requested_ || seek_request_secs_ >= 0.0;
+                });
             }
             if (stop_requested_)
                 break;
@@ -260,11 +311,18 @@ namespace MusicEngine {
             // Queue back-pressure control
             {
                 std::unique_lock<std::mutex> lock(queue_mutex_);
-                queue_cond_var_.wait(lock, [this] { return frame_queue_.size() < MAX_QUEUE_SIZE || stop_requested_; });
+                queue_cond_var_.wait(lock, [this] {
+                    return frame_queue_.size() < MAX_QUEUE_SIZE || stop_requested_ || seek_request_secs_ >= 0.0;
+                });
             }
             if (stop_requested_)
                 break;
 
+            // 如果有新的 seek 请求，回到循环顶部处理
+            if (seek_request_secs_ >= 0.0)
+                continue;
+
+            // Read and decode frames
             if (av_read_frame(format_ctx_, packet) >= 0) {
                 if (packet->stream_index == audio_stream_index_) {
                     if (avcodec_send_packet(codec_ctx_, packet) == 0) {
@@ -306,6 +364,14 @@ namespace MusicEngine {
                 // End of file
                 stop_requested_ = true;
                 logger_->info("Finished decoding file");
+
+                // 添加音乐播放完成的回调
+                state_ = PlayerState::Stopped;
+                // 调用回调通知上层应用
+                if (on_playback_finished_callback_) {
+                    logger_->info("Invoking on_playback_finished callback.");
+                    on_playback_finished_callback_();
+                }
                 break;
             }
         }
@@ -360,6 +426,81 @@ namespace MusicEngine {
             ma_uint32 frames_to_silence = frame_count - total_frames_written;
             memset(p_output_u8 + (total_frames_written * bytes_per_frame), 0, frames_to_silence * bytes_per_frame);
         }
+
+        // 累加实际写入的帧数到总播放样本数
+        total_samples_played_ += total_frames_written;
+
+
+        // If there wasn`t enough data, fill the rest with silence
+        if (total_frames_written < frame_count) {
+            // 静音填充
+        }
+    }
+
+    double MusicPlayer::get_duration() const { return pimpl_->total_duration_secs_; }
+
+    double MusicPlayer::get_current_position() const {
+        if (pimpl_->audio_device_.sampleRate > 0) {
+            return (double) pimpl_->total_samples_played_ / pimpl_->audio_device_.sampleRate;
+        }
+        return 0.0;
+    }
+
+    std::optional<double> MusicPlayer::seek(double position_secs) {
+        if (pimpl_->state_ == PlayerState::Stopped) {
+            pimpl_->logger_->warn("Seek request ignored: player is stopped.");
+            return std::nullopt; // 请求被忽略
+        }
+
+        // 注意：这里我们放宽了对 position_secs 的检查，因为 seek_percent 依赖它
+        // 具体的钳位应该由业务逻辑决定，或者在这里也加上
+        if (position_secs < 0)
+            position_secs = 0.0;
+        if (position_secs > pimpl_->total_duration_secs_)
+            position_secs = pimpl_->total_duration_secs_;
+
+
+        pimpl_->logger_->info("Requesting seek to {} seconds", position_secs);
+        pimpl_->seek_request_secs_ = position_secs;
+
+        // 唤醒解码线程
+        pimpl_->control_cond_var_.notify_one();
+        pimpl_->queue_cond_var_.notify_one();
+
+        return position_secs; // 返回实际请求的秒数
+    }
+
+    int MusicPlayer::get_current_position_percent() const {
+        if (pimpl_->total_duration_secs_ <= 0) {
+            return 0;
+        }
+        double current_position = get_current_position();
+        double percentage = (current_position / pimpl_->total_duration_secs_) * 100.0;
+        return static_cast<int>(std::round(percentage)); // 四舍五入取整
+    }
+
+    std::optional<int> MusicPlayer::seek_percent(int percentage) {
+        if (pimpl_->state_ == PlayerState::Stopped) {
+            pimpl_->logger_->warn("Seek percentage request ignored: player is stopped.");
+            return std::nullopt; // 请求被忽略
+        }
+
+        int clamped_percentage = std::max(0, std::min(100, percentage));
+        if (clamped_percentage != percentage) {
+            pimpl_->logger_->warn("Seek percentage {} is out of range. Clamped to {}.", percentage, clamped_percentage);
+        }
+
+        double target_secs = pimpl_->total_duration_secs_ * (static_cast<double>(clamped_percentage) / 100.0);
+
+        // 复用已有的 seek(double) 函数
+        seek(target_secs);
+
+        return clamped_percentage; // 返回钳位后的百分比
+    }
+
+    // 实现 set 函数
+    void MusicPlayer::set_on_playback_finished_callback(const std::function<void()> &callback) {
+        pimpl_->on_playback_finished_callback_ = callback;
     }
 
 } // namespace MusicEngine
