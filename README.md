@@ -3,6 +3,9 @@
 # MusicEngine
 
 ### A Modern C++ Music Backend Designed for Embedded Linux Platforms
+---
+**注意！** 该项目处于初始构建阶段，未进行充分测试，请谨慎观望。
+---
 
 English | [中文](./README_CN.md)
 
